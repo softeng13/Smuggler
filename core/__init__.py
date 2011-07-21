@@ -34,8 +34,8 @@ CONFIG_FILE = "config.ini"
 #the file extensions of pictures we can upload
 EXTENSIONS = [".jpg", ".jpeg", ".jpe",".jfif",".jif", ".png", ".gif"]
 #GENERAL
-LOG_DIR = "log1"
-DATA_DIR = "data1"
+LOG_DIR = "log"
+DATA_DIR = "data"
 #USER
 PICTURE_ROOT = ""
 
