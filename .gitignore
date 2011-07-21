@@ -1,0 +1,6 @@
+*.pyc
+config.ini
+log/*
+data/*
+*.db
+.DS_Store
