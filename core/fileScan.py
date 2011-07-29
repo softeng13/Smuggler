@@ -25,6 +25,7 @@ import os
 import hashlib
 import core
 import db
+import datetime
 
 myLogger = logging.getLogger('fileScan')
 
@@ -40,29 +41,38 @@ def md5(file):
     return m.hexdigest()
 
 def findPictures():
-    count = 0
     directories = [core.PICTURE_ROOT]
     while len(directories)>0:
         directory = directories.pop()
         myLogger.info("Checking directory: "+directory)
         for name in os.listdir(directory):
             fullpath = os.path.join(directory,name)
+            myLogger.debug("FileName: %s", fullpath)
             basename, extension = os.path.splitext(name)
-            if os.path.isfile(fullpath) and extension in core.EXTENSIONS:
-                count = count +1
+            if os.path.isfile(fullpath) and extension.lower() in core.EXTENSIONS:
                 myLogger.debug(format(fullpath.lstrip(core.PICTURE_ROOT)))
-                processFoundFile(LocalFile(fullpath, md5(fullpath)))
+                processFoundFile(fullpath)
             elif os.path.isdir(fullpath):
                 directories.append(fullpath)
-    myLogger.info('Total picture files found := {0}'.format(count))
 
-def processFoundFile(localFile):
-    #check if file is in the database by file name, path and md5. Can't just do 
-    #md5 since it is possible it is intended for the same picture to be in 
-    #multiple galleries
-    if not db.pictureExistsInDb(localFile.pathRoot, localFile.pictureFile, localFile.md5):
-        myLogger.info('Picture not found in db. Going to add it for later: {0}, {1}, {2}'.format(localFile.pathRoot, localFile.pictureFile, localFile.md5))
-        db.insertPictureInDb(localFile.pathRoot, localFile.pictureFile, localFile.md5, localFile.gallery, localFile.subcat, localFile.cat)
+def processFoundFile(pictureFile):
+    last_updated = datetime.datetime.fromtimestamp(os.path.getmtime(pictureFile))
+    md5_sum = md5(pictureFile)
+    pictureFile = format(pictureFile.lstrip(core.PICTURE_ROOT))
+    
+    path_root = core.PICTURE_ROOT
+    album = os.path.basename(os.path.dirname(pictureFile))
+    file_name = os.path.basename(pictureFile)
+    sub_category = os.path.basename(os.path.dirname(os.path.dirname(pictureFile)))
+    category = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(pictureFile))))
+    if category == "" or category == None:
+        category = sub_category
+        sub_category = None
+
+    myLogger.debug("path_root: '%s', album: '%s', last_updated: '%s', md5_sum: '%s', file_name: '%s', sub_category: '%s', category: '%s', file_path: '%s'", path_root, album ,last_updated,md5_sum,file_name,sub_category,category,pictureFile)
+    db.addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, pictureFile)
+
+    
 
 class LocalFile():
     def __init__(self, pictureFile, md5):

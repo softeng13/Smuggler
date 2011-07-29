@@ -25,6 +25,10 @@ import logging.handlers
 
 import core
 from core import fileScan
+from core import smugScan
+from core import dbSchema
+from core import fileUtil
+from core import pictureReport
 
 myLogger = logging.getLogger('Smuggler')
 
@@ -48,7 +52,7 @@ def logSetup():
     #will need to later add a config file for this, or maybe can just create a 
     #folder where it is being ran from. Doesn't seem right
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     
     #File Handler Setup to create rotate log files at 10 megabytes and only keep 5
@@ -80,15 +84,36 @@ def main():
     myLogger.info("Welcome to Smuggler!!!")
     myLogger.debug("Configuration File Processed and Logging Initialized.")
     
-    core.upgradeSchema()
+    dbSchema.upgradeSchema()
+    myLogger.info("Database started.")
+    """
+    core.checkOAuthConnection()
     
-    myLogger.debug("Starting to scan directories to locate any new pictures")
+    myLogger.info("Starting to scan directories to locate any new pictures")
     fileScan.findPictures()
     myLogger.debug("Finished scanning all files in the directory")
+    
+    myLogger.info("Starting to get all the picture info from SmugMug")
+    smugScan.getAllPictureInfo()
+    myLogger.debug("Finished getting all the picture info from SmugMug")
+    """
+    #Check for files that are the some local and on smugmug with different names
+    
+    report = [pictureReport.findMismatchedCategories(), "\n\n", 
+              pictureReport.findMisatchedFilenames(), "\n\n", 
+              pictureReport.findMissingLocalAlbums(), "\n\n", 
+              pictureReport.findMissingSmugMugAlbums(), "\n\n",
+              pictureReport.findMissingPictures()]
+    print ''.join(report)
+   
+#    fileUtil.fileRenamer()
+
     #last thing to do before closing up shop is save configuration information
     myLogger.debug("Saving configuration file.")
     core.saveConfig()
+    
 
+    
 if __name__ == '__main__':
     main()
     

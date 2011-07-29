@@ -21,3 +21,5 @@ SOFTWARE.
 '''
 
 from lib import configobj
+from lib import smugpy
+from smugpy import SmugMug

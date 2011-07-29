@@ -23,8 +23,11 @@ SOFTWARE.
 import logging
 import db
 
-
 myLogger = logging.getLogger('dbSchema')
+
+def upgradeSchema():
+    schema = SmugMugImageSchema()
+    schema.upgrade()
 
 class BaseSchema():
     """
@@ -43,18 +46,71 @@ class InitialSchema(BaseSchema):
     This is what the initial schema looks like, I am sure there will be many
     changes as things progress.
     """
-    def test(self):
-        """
-        Checks to make sure the database version is at least 1
-        """
-        return db.getDBVersion() >= 1
-    
     def upgrade(self):
         """
         If the database version is not at least one, it will upgrade it to the 
         version one database
         """
-        if not self.test():
+        self._upgrade(db.getDBVersion())
+        
+    def _upgrade(self, version):
+        if version < 1:
             db.executeSql("INSERT INTO version(number) VALUES (0)")
-            db.executeSql("CREATE TABLE pictures (path_root TEXT, file_path TEXT, md5 TEXT, category TEXT, sub_category TEXT, gallery TEXT, uploaded_date TIMESTAMP)")
+            db.executeSql("CREATE TABLE local_image (sub_category TEXT, category TEXT, album TEXT, last_updated TIMESTAMP, md5_sum TEXT, path_root TEXT, file_path TEXT, filename TEXT, modified BOOLEAN, PRIMARY KEY (path_root, file_path))")
             self.incrementDBVerson()
+        
+
+class OAuthSchema(InitialSchema):
+    """
+    This will add the necessary tables to store the needed information
+    to log in using OAuth
+    """
+    def upgrade(self):
+        self._upgrade(db.getDBVersion())
+    
+    def _upgrade(self, version):
+        """
+        If the database version is not at least two, it will upgrade it to the 
+        version one database
+        """
+        InitialSchema._upgrade(self,version)
+        if version < 2:
+            db.executeSql("CREATE TABLE oauth (token TEXT, secret TEXT)")
+            self.incrementDBVerson()
+            
+class SmugMugAlbumSchema(OAuthSchema):
+    """
+    This will add the necessary tables to store the needed information
+    to log in using OAuth
+    """
+    def upgrade(self):
+        self._upgrade(db.getDBVersion())
+    
+    def _upgrade(self, version):
+        """
+        If the database version is not at least two, it will upgrade it to the 
+        version one database
+        """
+        OAuthSchema._upgrade(self,version)
+        if version < 3:
+            db.executeSql("CREATE TABLE smug_album (category TEXT, sub_category TEXT, title TEXT, last_updated TIMESTAMP, key TEXT, id TEXT, PRIMARY KEY (id))")
+            self.incrementDBVerson()
+
+class SmugMugImageSchema(SmugMugAlbumSchema):
+    """
+    This will add the necessary tables to store the needed information
+    to log in using OAuth
+    """
+    def upgrade(self):
+        self._upgrade(db.getDBVersion())
+    
+    def _upgrade(self, version):
+        """
+        If the database version is not at least two, it will upgrade it to the 
+        version one database
+        """
+        SmugMugAlbumSchema._upgrade(self,version)
+        if version < 4:
+            db.executeSql("CREATE TABLE smug_image (album_id TEXT, last_updated TIMESTAMP, md5_sum TEXT, key TEXT, id TEXT, filename TEXT, PRIMARY KEY (id), FOREIGN KEY (album_id) REFERENCES smug_album(id))")
+            self.incrementDBVerson()
+        
