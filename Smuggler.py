@@ -172,10 +172,7 @@ def main():
     core.loadConfig()
     
     #initialize logging
-    start = time.time()
     logSetup(logdebug, consolelog)
-    elapsed = (time.time() - start)
-    print 'Log Setup time := ', elapsed
     
     #initialize the database
     if deleteDb:
@@ -194,22 +191,17 @@ def main():
     if filerename and not core.FIRST_RUN:
         fileUtil.fileRenamer()
         
-    myLogger.info("Starting to scan directories to locate any new pictures")
     
-    myLogger.info("Starting to get all the picture info from SmugMug")
-    start = time.time()
-    smugScan.getAllPictureInfo()
-    elapsed = (time.time() - start)
-    print 'Find SmugMug info time := ', elapsed
-    myLogger.debug("Finished getting all the picture info from SmugMug")
+    if not justReport:
+        myLogger.info("Starting to get all the picture info from SmugMug")
+        smugScan.getAllPictureInfo()
+        myLogger.debug("Finished getting all the picture info from SmugMug")
+        
+        myLogger.info("Starting to scan directories to locate any new pictures")
+        fileScan.findPictures()
+        myLogger.debug("Finished scanning all files in the directory")
     
-    start = time.time()
-    fileScan.findPictures()
-    elapsed = (time.time() - start)
-    print 'Find Pictures time := ', elapsed
-    myLogger.debug("Finished scanning all files in the directory")
-    
-    #Check for files that are the some local and on smugmug with different names
+    #Check for files that are the some local and on SmugMug with different names
     
     report = [pictureReport.findMismatchedCategories(), "\n\n", 
               pictureReport.findMisatchedFilenames(), "\n\n", 
