@@ -22,11 +22,13 @@ SOFTWARE.
 
 import logging
 import db
+import core
+import datetime
 
 myLogger = logging.getLogger('dbSchema')
 
 def upgradeSchema():
-    schema = SmugMugImageSchema()
+    schema = LocalImageSchema()
     schema.upgrade()
 
 class BaseSchema():
@@ -55,6 +57,7 @@ class InitialSchema(BaseSchema):
         
     def _upgrade(self, version):
         if version < 1:
+            core.FIRST_RUN
             db.executeSql("INSERT INTO version(number) VALUES (0)")
             db.executeSql("CREATE TABLE local_image (sub_category TEXT, category TEXT, album TEXT, last_updated TIMESTAMP, md5_sum TEXT, path_root TEXT, file_path TEXT, filename TEXT, modified BOOLEAN, PRIMARY KEY (path_root, file_path))")
             self.incrementDBVerson()
@@ -80,8 +83,7 @@ class OAuthSchema(InitialSchema):
             
 class SmugMugAlbumSchema(OAuthSchema):
     """
-    This will add the necessary tables to store the needed information
-    to log in using OAuth
+    
     """
     def upgrade(self):
         self._upgrade(db.getDBVersion())
@@ -98,8 +100,7 @@ class SmugMugAlbumSchema(OAuthSchema):
 
 class SmugMugImageSchema(SmugMugAlbumSchema):
     """
-    This will add the necessary tables to store the needed information
-    to log in using OAuth
+    
     """
     def upgrade(self):
         self._upgrade(db.getDBVersion())
@@ -113,4 +114,22 @@ class SmugMugImageSchema(SmugMugAlbumSchema):
         if version < 4:
             db.executeSql("CREATE TABLE smug_image (album_id TEXT, last_updated TIMESTAMP, md5_sum TEXT, key TEXT, id TEXT, filename TEXT, PRIMARY KEY (id), FOREIGN KEY (album_id) REFERENCES smug_album(id))")
             self.incrementDBVerson()
-        
+
+
+class LocalImageSchema(SmugMugImageSchema):
+    """
+    """ 
+    def upgrade(self):
+        self._upgrade(db.getDBVersion())
+    
+    def _upgrade(self, version):
+        """
+        If the database version is not at least two, it will upgrade it to the 
+        version one database
+        """
+        SmugMugImageSchema._upgrade(self,version)
+        if version < 5:
+            db.executeSql("ALTER TABLE local_image ADD last_scanned TIMESTAMP")
+            params = [datetime.datetime(1960, 1,1,1,1,1,1)]
+            db.executeSql("UPDATE local_image SET last_scanned = ?", params)
+            self.incrementDBVerson()

@@ -25,6 +25,7 @@ import logging
 import os
 import sqlite3
 import core
+import datetime
 
 myLogger = logging.getLogger('db')
         
@@ -77,18 +78,16 @@ def executeSql(query, params = None):
 
 def getDBVersion():
     result = core.conn.execute("SELECT number FROM version")
-    version = result[0]
-    if version is not None:
-        return int(version[0])
+    if result is not None and len(result) > 0:
+        return int(result[0][0])
     else:
         return 0
 
 def getOAuthConnectionDetails():
     sql = "SELECT token, secret FROM oauth"
     result = core.conn.execute(sql)
-    row = result[0]
-    if (row is not None):
-        return row
+    if result is not None and len(result) > 0:
+        return result[0]
     else:
         return None
 def setOAuthConnectionDetails(token, secret):
@@ -97,8 +96,9 @@ def setOAuthConnectionDetails(token, secret):
     core.conn.execute(sql, params)
 
 def addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path):    
-    params = [sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path]
-    sql = "INSERT INTO local_image(sub_category, category, album, last_updated, md5_sum, path_root, filename, modified, file_path) VALUES (:1,:2,:3,:4,:5,:6,:7,1, :8)"
+    
+    params = [sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path, datetime.datetime.now()]
+    sql = "INSERT INTO local_image(sub_category, category, album, last_updated, md5_sum, path_root, filename, modified, file_path, last_scanned) VALUES (:1,:2,:3,:4,:5,:6,:7,1, :8, :9)"
     try:
         core.conn.execute(sql, params)
     except sqlite3.IntegrityError:
@@ -111,7 +111,8 @@ def addLocalImage(sub_category, category, album, last_updated, md5_sum, path_roo
                "    path_root = :6, "
                "    filename = :7, "
                "    modified = ((SELECT md5_sum FROM local_image WHERE path_root = :6 AND sub_category = :1 and category = :2 and album = :3 and  filename = :7) = :5), "
-               "    file_path = :8 "
+               "    file_path = :8 ,"
+               "    last_scanned = :9 "
                "WHERE  path_root = :6 "
                "    AND sub_category = :1 "
                "    AND category = :2 "
@@ -132,10 +133,14 @@ def addSmugImage(album_id, last_updated, md5_sum, key, id, filename):
     core.conn.execute(sql, params)
     
 def findSameFilesWithDifferentName():
-    sql = ("select distinct l.filename, s.filename, l.path_root, l.file_path, l.rowid "
-    "from local_image l "
-    "inner join smug_image s on l.md5_sum = s.md5_sum "
-    "where l.filename <> s.filename")
+    sql = (
+           "SELECT DISTINCT li.filename, si.filename, li.path_root, li.file_path, li.rowid  " 
+           "FROM local_image li "
+           "  INNER JOIN smug_image si on li.md5_sum = si.md5_sum " 
+           "  INNER JOIN smug_album sa on si.album_id = sa.id "
+           "WHERE li.filename <> si.filename"
+           "  AND li.album = sa.title"
+          )
     result = core.conn.execute(sql)
     return result
 
@@ -166,8 +171,9 @@ def findMismatchedCategories():
 
 def findMisatchedFilenames():
     """
-    list of local images that have the same md5sum as an image in smug mug, but they 
-    have different filenames. 
+    list of local images that have the same md5sum as an image on SmugMug, but they 
+    have different filenames. Note this will only list the files if they are in the 
+    same album 
     Columns: local category, local sub-category, local filename, 
              smug category, smug sub-category, smug filename
     """
@@ -175,7 +181,9 @@ def findMisatchedFilenames():
            "SELECT li.filename as local_name, si.filename as smug_name, li.category, li.sub_category, li.album " 
            "FROM local_image li "
            "  INNER JOIN smug_image si on li.md5_sum = si.md5_sum " 
-           " WHERE li.filename <> si.filename"
+           "  INNER JOIN smug_album sa on si.album_id = sa.id "
+           "WHERE li.filename <> si.filename"
+           "  AND li.album = sa.title"
           )
     result = core.conn.execute(sql)
     return result
@@ -238,5 +246,27 @@ def findMissingPictures():
            "GROUP BY li.album "
            "ORDER BY need_upload desc, need_download desc"
           ) 
+    result = core.conn.execute(sql)
+    return result
+
+def findDuplicateLocalImage():
+    sql = (
+          "SELECT li.filename, li2.filename, li.album, li.sub_category, li.category "
+          "FROM local_image li "
+          "  INNER JOIN local_image li2 on li.md5_sum = li2.md5_sum AND li.rowid < li2.rowid "
+          "WHERE li.album = li2.album"
+         )     
+    result = core.conn.execute(sql)
+    return result
+
+def findDuplicateSmugMugImage():
+    sql = (
+           "SELECT si.filename, si2.filename, sa.title, sa.sub_category, sa.category "
+           "FROM smug_image si "
+           "   INNER JOIN smug_album sa on si.album_id = sa.id "
+           "   INNER JOIN smug_image si2 on si.md5_sum = si2.md5_sum AND si.rowid < si2.rowid "
+           "   INNER JOIN smug_album sa2 on si2.album_id = sa2.id "
+           "WHERE sa.id = sa2.id"
+          )
     result = core.conn.execute(sql)
     return result

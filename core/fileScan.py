@@ -72,18 +72,4 @@ def processFoundFile(pictureFile):
     myLogger.debug("path_root: '%s', album: '%s', last_updated: '%s', md5_sum: '%s', file_name: '%s', sub_category: '%s', category: '%s', file_path: '%s'", path_root, album ,last_updated,md5_sum,file_name,sub_category,category,pictureFile)
     db.addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, pictureFile)
 
-    
-
-class LocalFile():
-    def __init__(self, pictureFile, md5):
-        self.md5 = md5
-        self.pathRoot = core.PICTURE_ROOT
-        self.pictureFile = format(pictureFile.lstrip(core.PICTURE_ROOT))
-        self.fileName = os.path.basename(self.pictureFile)
-        self.gallery = os.path.basename(os.path.dirname(self.pictureFile))
-        self.subcat = os.path.basename(os.path.dirname(os.path.dirname(self.pictureFile)))
-        self.cat = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(self.pictureFile))))
-        if self.cat == None:
-            self.cat = self.subcat
-            self.subcat = None
         

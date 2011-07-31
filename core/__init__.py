@@ -36,6 +36,8 @@ from lib.smugpy import SmugMug
 
 myLogger = logging.getLogger('core')
 
+FIRST_RUN = False
+
 CONFIG_FILE = "config.ini"
 #the file extensions of pictures we can upload
 EXTENSIONS = [".jpg", ".jpeg", ".jpe",".jfif",".jif", ".png", ".gif"]
@@ -87,11 +89,6 @@ def saveConfig():
     configFile['USER_SETTINGS']['picture_root'] = PICTURE_ROOT
     configFile.write()
 
-
-def upgradeSchema():
-    schema = dbSchema.SmugMugAlbumSchema()
-    schema.upgrade()
-
 def checkOAuthConnection():
     oauthDetails = db.getOAuthConnectionDetails()
     if (oauthDetails is None):
@@ -104,8 +101,10 @@ def checkOAuthConnection():
         myLogger.debug("OAUTH_TOKEN : "+smugmug.oauth_token)
         myLogger.debug("OAUTH_TOKEN_SECRET : "+smugmug.oauth_token_secret)
         db.setOAuthConnectionDetails(smugmug.oauth_token, smugmug.oauth_token_secret)
+        print "Smuggler has been authorized.\n"
     else:
         myLogger.info("Setting found OAuth Details")
+        myLogger.debug("OAUTH_TOKEN from db : "+oauthDetails[0])
+        myLogger.debug("OAUTH_TOKEN_SECRET from db: "+oauthDetails[1])
         smugmug.set_oauth_token(oauthDetails[0], oauthDetails[1])
-        myLogger.debug("OAUTH_TOKEN : "+smugmug.oauth_token)
-        myLogger.debug("OAUTH_TOKEN_SECRET : "+smugmug.oauth_token_secret)
+        

@@ -24,6 +24,7 @@ import errno
 import getopt
 import logging.handlers
 import sys
+import time
 
 import core
 from core import fileScan
@@ -106,7 +107,16 @@ def usage():
             "the wiki for the project, but until then just look at open/closed issues and if \n"
             "you don't see your problem open up a new one.                                   \n"
            )
-    print help   
+    print help 
+
+def renameDb():
+    existingFilename = core.DATA_DIR+'/smuggler.db'
+    newFilename = existingFilename + '.old'
+    try:
+        os.remove(newFilename)
+    except OSError:
+        pass
+    os.rename(existingFilename, newFilename)  
 
 def main():
     #Default values for parameters
@@ -115,9 +125,11 @@ def main():
     download = False
     logdebug = False
     consolelog = False
+    filerename = False
+    justReport = False
     #process options
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hfudlc", ['help','forcescan', 'upload', 'download', 'logdebug', 'consolelog', 'config='])
+        opts, args = getopt.getopt(sys.argv[1:], "hfudlc", ['help','forcescan', 'upload', 'download', 'logdebug', 'consolelog', 'config=', 'filerename', 'report'])
     except getopt.GetoptError, err:
         out = [str(err), "\n\n"]
         print ''.join(out)
@@ -141,7 +153,11 @@ def main():
         elif option in ("-c", "--consolelog"):
             consolelog = True
         elif option == "--config":
-            core.CONFIG_FILE = value   
+            core.CONFIG_FILE = value
+        elif option == "--filerename":
+            filerename = True   
+        elif option == "--report":
+            justReport = True 
         else:
             assert False, "Unhandled Opton. Go create an issue on github and tell me a joke while you are there."
     
@@ -154,26 +170,44 @@ def main():
         core.PICTURE_ROOT = pictureRoot
         core.saveConfig()
     core.loadConfig()
+    
     #initialize logging
+    start = time.time()
     logSetup(logdebug, consolelog)
-    """
+    elapsed = (time.time() - start)
+    print 'Log Setup time := ', elapsed
     
-    
-    myLogger.info("Welcome to Smuggler!!!")
+    #initialize the database
+    if deleteDb:
+        renameDb() #go delete the file, it is easier that way, well rename it anyway
+    myLogger.info("Starting Smuggler, watch your back.")
     myLogger.debug("Configuration File Processed and Logging Initialized.")
-    
     dbSchema.upgradeSchema()
     myLogger.info("Database started.")
     
+    #check/initialize the oauth connection information
     core.checkOAuthConnection()
     
+    #check if they want us to rename files, in order for this to run, Smuggler
+    #needs to have been run once before, meaning the user has seen the report
+    #and it is safe to assume they understand what it is changing.  
+    if filerename and not core.FIRST_RUN:
+        fileUtil.fileRenamer()
+        
     myLogger.info("Starting to scan directories to locate any new pictures")
-    fileScan.findPictures()
-    myLogger.debug("Finished scanning all files in the directory")
     
     myLogger.info("Starting to get all the picture info from SmugMug")
+    start = time.time()
     smugScan.getAllPictureInfo()
+    elapsed = (time.time() - start)
+    print 'Find SmugMug info time := ', elapsed
     myLogger.debug("Finished getting all the picture info from SmugMug")
+    
+    start = time.time()
+    fileScan.findPictures()
+    elapsed = (time.time() - start)
+    print 'Find Pictures time := ', elapsed
+    myLogger.debug("Finished scanning all files in the directory")
     
     #Check for files that are the some local and on smugmug with different names
     
@@ -181,16 +215,16 @@ def main():
               pictureReport.findMisatchedFilenames(), "\n\n", 
               pictureReport.findMissingLocalAlbums(), "\n\n", 
               pictureReport.findMissingSmugMugAlbums(), "\n\n",
-              pictureReport.findMissingPictures()]
+              pictureReport.findMissingPictures(),"\n\n",
+              pictureReport.findDuplicateLocalImage(),"\n\n",
+              pictureReport.findDuplicateSmugMugImage()]
     print ''.join(report)
    
-#    fileUtil.fileRenamer()
-
+    
     #last thing to do before closing up shop is save configuration information
     myLogger.debug("Saving configuration file.")
     core.saveConfig()
     
-    """
     
 if __name__ == '__main__':
     main()

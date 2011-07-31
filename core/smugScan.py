@@ -48,7 +48,17 @@ def getPictures(album):
     for picture in pictures["Album"]["Images"]:
         db.addSmugImage(albumId, datetime.datetime.strptime(picture["LastUpdated"],'%Y-%m-%d %H:%M:%S'), picture["MD5Sum"], picture["Key"], picture["id"], picture["FileName"])
 
+def emptySmugMugTables():
+    db.executeSql("DELETE FROM smug_album")
+    db.executeSql("DELETE FROM smug_image")
+
 def getAllPictureInfo():
+    #start fresh on this
+    emptySmugMugTables()
+    
+    #now get the albums 
     albums = getAlbums()
     for album in albums["Albums"]:
+        #and the pictures in each album
         getPictures(album)
+    

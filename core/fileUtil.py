@@ -23,22 +23,20 @@ SOFTWARE.
 import logging
 import os
 import db
-import fileScan
 
 
 myLogger = logging.getLogger('fileUtil')
 
 def fileRenamer():
     files = db.findSameFilesWithDifferentName()
-    runScan = False
     for file in files:
-        runScan = True
         original = None
         new = None
         original = file[2]+"/"+file[3]
         new = original.replace(file[0], file[1])
         myLogger.info("Renaming '%s' to '%s' rowid '%s'", original, new, file[4])
         try:
+            myLogger.debug("calling os.rename(%s, %s)",original, new)
             os.rename(original, new)
         except OSError:
             #I know I feel wrong about this too, but after some thought,
@@ -49,8 +47,4 @@ def fileRenamer():
             myLogger.error("File '%s' was not there when we went to rename it", original)
             pass
         db.deleteLocalImage(file[4])
-    #Kick off another file scan to pick them back up
-    if runScan:
-        myLogger.info("Finished renaming files, starting another file scan to pick them back up.")
-        fileScan.findPictures()
         
