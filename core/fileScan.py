@@ -49,6 +49,8 @@ def findPictures():
             if extension.lower() in core.EXTENSIONS:
                 myLogger.debug(format(fullname.lstrip(core.PICTURE_ROOT)))
                 processFoundFile(fullname)
+    #cleanup what we can, for images that have been moved            
+    cleanup()
     """
     directories = [core.PICTURE_ROOT]
     while len(directories)>0:
@@ -90,4 +92,11 @@ def cleanup():
     causing confusion. We will not remove items that have could not be found,
     just the ones that were found somewhere else.
     """
+    sql = (
+           "DELETE FROM local_image "
+            "WHERE rowid IN (SELECT li2.rowid "
+            "FROM local_image li "
+            " INNER JOIN local_image li2 on li.md5_sum = li2.md5_Sum and li.last_scanned > li2.last_scanned)"
+           )
+    db.executeSql(sql)
     pass    
