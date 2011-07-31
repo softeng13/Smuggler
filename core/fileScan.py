@@ -41,6 +41,15 @@ def md5(file):
     return m.hexdigest()
 
 def findPictures():
+    for root, dirs, files in os.walk(core.PICTURE_ROOT):
+        for name in files:
+            fullname = os.path.join(root, name)
+            myLogger.debug("FileName: %s", fullname)
+            basename, extension = os.path.splitext(fullname)
+            if extension.lower() in core.EXTENSIONS:
+                myLogger.debug(format(fullname.lstrip(core.PICTURE_ROOT)))
+                processFoundFile(fullname)
+    """
     directories = [core.PICTURE_ROOT]
     while len(directories)>0:
         directory = directories.pop()
@@ -54,6 +63,7 @@ def findPictures():
                 processFoundFile(fullpath)
             elif os.path.isdir(fullpath):
                 directories.append(fullpath)
+    """
 
 def processFoundFile(pictureFile):
     last_updated = datetime.datetime.fromtimestamp(os.path.getmtime(pictureFile))
@@ -72,4 +82,12 @@ def processFoundFile(pictureFile):
     myLogger.debug("path_root: '%s', album: '%s', last_updated: '%s', md5_sum: '%s', file_name: '%s', sub_category: '%s', category: '%s', file_path: '%s'", path_root, album ,last_updated,md5_sum,file_name,sub_category,category,pictureFile)
     db.addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, pictureFile)
 
-        
+
+def cleanup():
+    """
+    We need to try to identify albums, or pictures that were not found during 
+    the scan, and remove them form the db so they do not show up in the reports
+    causing confusion. We will not remove items that have could not be found,
+    just the ones that were found somewhere else.
+    """
+    pass    
