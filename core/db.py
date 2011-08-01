@@ -25,7 +25,6 @@ import logging
 import os
 import sqlite3
 import core
-import datetime
 
 myLogger = logging.getLogger('db')
         
@@ -95,9 +94,9 @@ def setOAuthConnectionDetails(token, secret):
     params = [token, secret]
     core.conn.execute(sql, params)
 
-def addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path):    
+def addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path, scan_time):    
     
-    params = [sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path, datetime.datetime.now()]
+    params = [sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path, scan_time]
     sql = "INSERT INTO local_image(sub_category, category, album, last_updated, md5_sum, path_root, filename, modified, file_path, last_scanned) VALUES (:1,:2,:3,:4,:5,:6,:7,1, :8, :9)"
     try:
         core.conn.execute(sql, params)
@@ -114,8 +113,8 @@ def addLocalImage(sub_category, category, album, last_updated, md5_sum, path_roo
                "    file_path = :8 ,"
                "    last_scanned = :9 "
                "WHERE  path_root = :6 "
-               "    AND sub_category = :1 "
-               "    AND category = :2 "
+               "    AND (:1 IS NULL OR sub_category = :1) "
+               "    AND (:2 IS NULL OR category = :2) "
                "    AND album = :3 "
                "    AND filename = :7")
         core.conn.execute(sql, params)
@@ -270,3 +269,12 @@ def findDuplicateSmugMugImage():
           )
     result = core.conn.execute(sql)
     return result
+
+        
+def findImagesinDbNotScannedThisRun():
+    sql = (
+           ""
+          )
+    result = core.conn.execute(sql)
+    return result
+    
