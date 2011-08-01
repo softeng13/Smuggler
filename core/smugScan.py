@@ -23,6 +23,7 @@ import logging
 import core
 import db
 import datetime
+import sys
 
 myLogger = logging.getLogger('smugScan')
 
@@ -30,6 +31,11 @@ def getAlbums():
     albums = core.smugmug.albums_get(Extras="LastUpdated")
     
     for album in albums["Albums"]:
+        title = album["Title"]
+        sys.stdout.write('\rGetting SmugMug Album Details: '.ljust(80))
+        sys.stdout.flush()
+        sys.stdout.write('\rGetting SmugMug Album Details: {0}'.format(title).ljust(80))
+        sys.stdout.flush()
         try:
             cat = album["Category"]["Name"]
         except KeyError:
@@ -38,7 +44,11 @@ def getAlbums():
             subCat = album["SubCategory"]["Name"]
         except KeyError:
             subCat = None
-        db.addSmugAlbum(cat, subCat, album["Title"], datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
+        db.addSmugAlbum(cat, subCat, title, datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
+    sys.stdout.write('\rGetting SmugMug Album Details: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGetting SmugMug Album Details: Complete\n')
+    sys.stdout.flush()  
     return albums
 
 def getPictures(album):
@@ -46,7 +56,13 @@ def getPictures(album):
     #print pictures
     albumId = pictures["Album"]["id"]
     for picture in pictures["Album"]["Images"]:
+        title = picture["FileName"]
+        sys.stdout.write('\rGetting SmugMug Picture Details: '.ljust(80))
+        sys.stdout.flush()
+        sys.stdout.write('\rGetting SmugMug Picture Details: {0}'.format(title).ljust(80))
+        sys.stdout.flush()
         db.addSmugImage(albumId, datetime.datetime.strptime(picture["LastUpdated"],'%Y-%m-%d %H:%M:%S'), picture["MD5Sum"], picture["Key"], picture["id"], picture["FileName"])
+    
 
 def emptySmugMugTables():
     db.executeSql("DELETE FROM smug_album")
@@ -54,6 +70,7 @@ def emptySmugMugTables():
 
 def getAllPictureInfo():
     #start fresh on this
+    print 'Starting to scan SmugMug.'
     emptySmugMugTables()
     
     #now get the albums 
@@ -61,4 +78,7 @@ def getAllPictureInfo():
     for album in albums["Albums"]:
         #and the pictures in each album
         getPictures(album)
-    
+    sys.stdout.write('\rGetting SmugMug Picture Details: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGetting SmugMug Picture Details: Complete\n')
+    sys.stdout.flush() 

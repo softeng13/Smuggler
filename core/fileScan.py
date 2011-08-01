@@ -26,6 +26,7 @@ import hashlib
 import core
 import db
 import datetime
+import sys
 
 myLogger = logging.getLogger('fileScan')
 
@@ -41,33 +42,27 @@ def md5(file):
     return m.hexdigest()
 
 def findPictures():
+    now = datetime.datetime.now()
     for root, dirs, files in os.walk(core.PICTURE_ROOT):
         for name in files:
             fullname = os.path.join(root, name)
+            sys.stdout.write('\rScanning Local Files: '.ljust(80))
+            sys.stdout.flush()
+            sys.stdout.write('\rScanning Local Files: {0}'.format(fullname).ljust(80))
+            sys.stdout.flush()
             myLogger.debug("FileName: %s", fullname)
             basename, extension = os.path.splitext(fullname)
             if extension.lower() in core.EXTENSIONS:
                 myLogger.debug(format(fullname.lstrip(core.PICTURE_ROOT)))
-                processFoundFile(fullname)
+                processFoundFile(fullname, now)
     #cleanup what we can, for images that have been moved            
     cleanup()
-    """
-    directories = [core.PICTURE_ROOT]
-    while len(directories)>0:
-        directory = directories.pop()
-        myLogger.info("Checking directory: "+directory)
-        for name in os.listdir(directory):
-            fullpath = os.path.join(directory,name)
-            myLogger.debug("FileName: %s", fullpath)
-            basename, extension = os.path.splitext(name)
-            if os.path.isfile(fullpath) and extension.lower() in core.EXTENSIONS:
-                myLogger.debug(format(fullpath.lstrip(core.PICTURE_ROOT)))
-                processFoundFile(fullpath)
-            elif os.path.isdir(fullpath):
-                directories.append(fullpath)
-    """
+    sys.stdout.write('\rScanning Local Files: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rScanning Local Files: Complete\n')
+    sys.stdout.flush()
 
-def processFoundFile(pictureFile):
+def processFoundFile(pictureFile, timestamp):
     last_updated = datetime.datetime.fromtimestamp(os.path.getmtime(pictureFile))
     md5_sum = md5(pictureFile)
     pictureFile = format(pictureFile.lstrip(core.PICTURE_ROOT))
@@ -81,8 +76,8 @@ def processFoundFile(pictureFile):
         category = sub_category
         sub_category = None
 
-    myLogger.debug("path_root: '%s', album: '%s', last_updated: '%s', md5_sum: '%s', file_name: '%s', sub_category: '%s', category: '%s', file_path: '%s'", path_root, album ,last_updated,md5_sum,file_name,sub_category,category,pictureFile)
-    db.addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, pictureFile)
+    myLogger.debug("path_root: '%s', album: '%s', last_updated: '%s', md5_sum: '%s', file_name: '%s', sub_category: '%s', category: '%s', file_path: '%s', timestamp: '%s'", path_root, album ,last_updated,md5_sum,file_name,sub_category,category,pictureFile, timestamp)
+    db.addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, pictureFile, timestamp)
 
 
 def cleanup():
