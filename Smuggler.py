@@ -203,21 +203,13 @@ def main():
     
     #Check for files that are the some local and on SmugMug with different names
     
-    report = [pictureReport.findMismatchedCategories(), "\n\n", 
-              pictureReport.findMisatchedFilenames(), "\n\n", 
-              pictureReport.findMissingLocalAlbums(), "\n\n", 
-              pictureReport.findMissingSmugMugAlbums(), "\n\n",
-              pictureReport.findMissingPictures(),"\n\n",
-              pictureReport.findDuplicateLocalImage(),"\n\n",
-              pictureReport.findDuplicateSmugMugImage(), "\n\n",
-              pictureReport.findImagesinDbNotScannedThisRun()]
-    print ''.join(report)
+    pictureReport.generateReports()
    
     
     #last thing to do before closing up shop is save configuration information
     myLogger.debug("Saving configuration file.")
     core.saveConfig()
-    
+    print "\n"
     
 if __name__ == '__main__':
     main()

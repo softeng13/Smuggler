@@ -22,7 +22,7 @@ SOFTWARE.
 
 import db
 import logging
-
+import sys
 
 """
 SELECT sa. category, sa.sub_category, sa.title, si.filename, si.md5_sum, si.id
@@ -207,3 +207,89 @@ def findImagesinDbNotScannedThisRun():
         #print line
         reportRows.append(line)
     return ''.join(reportRows)
+
+def generateReports():
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding mismatched Categories'.ljust(80))
+    sys.stdout.flush()
+    mismatchedCategories = findMismatchedCategories()
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding mismatched Filenames'.ljust(80))
+    sys.stdout.flush()
+    mismatchedFilenames = findMisatchedFilenames()
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding Missing Local Albums'.ljust(80))
+    sys.stdout.flush()
+    missingLocal = findMissingLocalAlbums()
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding Missing SmugMug Albums'.ljust(80))
+    sys.stdout.flush()
+    missingSmug = findMissingSmugMugAlbums()
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding Missing Images'.ljust(80))
+    sys.stdout.flush()
+    missingImages = findMissingPictures()
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding Duplicate Local Images'.ljust(80))
+    sys.stdout.flush()
+    localDups = findDuplicateLocalImage()
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding Duplicate SmugMug Images'.ljust(80))
+    sys.stdout.flush()
+    smugDups = findDuplicateSmugMugImage()
+    
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Finding Images Missing from Last Scan'.ljust(80))
+    sys.stdout.flush()
+    deletes = findImagesinDbNotScannedThisRun()
+    
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Combining Reports'.ljust(80))
+    sys.stdout.flush()
+    report = [mismatchedCategories, "\n\n", 
+              mismatchedFilenames, "\n\n", 
+              missingLocal, "\n\n", 
+              missingSmug, "\n\n",
+              missingImages,"\n\n",
+              localDups,"\n\n",
+              smugDups, "\n\n",
+              deletes]
+    filename ='report.txt'
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Writing Report to {0}'.format(filename).ljust(80))
+    sys.stdout.flush()
+    file = open(filename, 'w')
+    file.write(''.join(report))
+    file.close()
+    sys.stdout.write('\rGenerating Reports: '.ljust(80))
+    sys.stdout.flush()
+    sys.stdout.write('\rGenerating Reports: Complete (Report written to {0})\n'.format(filename).ljust(80))
+    
+    """
+    mismatchedCategories
+    mismatchedFilenames
+    missingLocal
+    missingSmug
+    missingImages
+    localDups
+    smugDups
+    deletes
+    print ''.join(report)
+    """

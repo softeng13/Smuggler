@@ -48,7 +48,7 @@ def findPictures():
             fullname = os.path.join(root, name)
             sys.stdout.write('\rScanning Local Files: '.ljust(80))
             sys.stdout.flush()
-            sys.stdout.write('\rScanning Local Files: {0}'.format(fullname).ljust(80))
+            sys.stdout.write('\rScanning Local Files: {0}'.format(name).ljust(80))
             sys.stdout.flush()
             myLogger.debug("FileName: %s", fullname)
             basename, extension = os.path.splitext(fullname)
