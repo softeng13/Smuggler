@@ -24,21 +24,18 @@ You can see a the list of features planned to implemented by checking out the [m
 * Upload images missing from SmugMug (will create any needed albums)
 * Download images missing from the local set of images
 
-##
-Other Projects
+## Other Projects
 
 Smuggler makes use of the following projects:
 
 * [ConfigObj 4][ConfigObj 4]
 * [smugpy][smugpy]
 
-## 
-Dependencies
+## Dependencies
 
 Smuggler has only been tested with Python 2.7 at this current stage, so that is what is recommended.
 
-##
-Bugs
+## Bugs
 
 If you find a bug please report it or it'll never get fixed. Verify that it hasn't [already been submitted][issues] and then [log a new bug][newissue]. Be sure to provide as much information as possible.
 
