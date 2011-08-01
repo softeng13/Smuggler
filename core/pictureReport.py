@@ -280,7 +280,7 @@ def generateReports():
     file.close()
     sys.stdout.write('\rGenerating Reports: '.ljust(80))
     sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Complete (Report written to {0})\n'.format(filename).ljust(80))
+    sys.stdout.write('\rGenerating Reports: Complete (Report written to {0})\n'.format(filename))
     
     """
     mismatchedCategories
