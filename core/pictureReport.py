@@ -20,9 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-import db
 import logging
 import sys
+
+import db
+import core
 
 """
 SELECT sa. category, sa.sub_category, sa.title, si.filename, si.md5_sum, si.id
@@ -270,7 +272,7 @@ def generateReports():
               localDups,"\n\n",
               smugDups, "\n\n",
               deletes]
-    filename ='report.txt'
+    filename =core.DATA_DIR+'/report.txt'
     sys.stdout.write('\rGenerating Reports: '.ljust(80))
     sys.stdout.flush()
     sys.stdout.write('\rGenerating Reports: Writing Report to {0}'.format(filename).ljust(80))
@@ -281,15 +283,4 @@ def generateReports():
     sys.stdout.write('\rGenerating Reports: '.ljust(80))
     sys.stdout.flush()
     sys.stdout.write('\rGenerating Reports: Complete (Report written to {0})\n'.format(filename))
-    
-    """
-    mismatchedCategories
-    mismatchedFilenames
-    missingLocal
-    missingSmug
-    missingImages
-    localDups
-    smugDups
-    deletes
-    print ''.join(report)
-    """
+  

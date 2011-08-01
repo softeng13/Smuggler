@@ -208,7 +208,7 @@ def main():
     
     #last thing to do before closing up shop is save configuration information
     myLogger.debug("Saving configuration file.")
-    core.saveConfig()
+    #core.saveConfig()
     print "\n"
     
 if __name__ == '__main__':
