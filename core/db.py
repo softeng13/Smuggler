@@ -273,7 +273,9 @@ def findDuplicateSmugMugImage():
         
 def findImagesinDbNotScannedThisRun():
     sql = (
-           ""
+           " SELECT li.last_scanned, li.filename, li.album, li.sub_category, li.category" 
+           " FROM local_image li"
+           " WHERE li.last_scanned < (select max(last_scanned) from local_image)"
           )
     result = core.conn.execute(sql)
     return result

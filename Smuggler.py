@@ -140,7 +140,7 @@ def main():
         if option in ("-h", "--help"):
             usage()
             #sys.exit()
-        elif option in ("-f", "--forceScan"):
+        elif option in ("-f", "--forcescan"):
             deleteDb = True
         elif option in ("-u", "--upload"):
             upload = True
@@ -184,7 +184,7 @@ def main():
     
     #check/initialize the oauth connection information
     core.checkOAuthConnection()
-    
+
     #check if they want us to rename files, in order for this to run, Smuggler
     #needs to have been run once before, meaning the user has seen the report
     #and it is safe to assume they understand what it is changing.  
@@ -209,7 +209,8 @@ def main():
               pictureReport.findMissingSmugMugAlbums(), "\n\n",
               pictureReport.findMissingPictures(),"\n\n",
               pictureReport.findDuplicateLocalImage(),"\n\n",
-              pictureReport.findDuplicateSmugMugImage()]
+              pictureReport.findDuplicateSmugMugImage(), "\n\n",
+              pictureReport.findImagesinDbNotScannedThisRun()]
     print ''.join(report)
    
     

@@ -162,9 +162,6 @@ def findMissingPictures():
 
 def findDuplicateLocalImage():
     rows = db.findDuplicateLocalImage()
-    """
-    li.filename, li2.filename, li.album, li.sub_category, li.category
-    """
     report = (
               "The following table lists the duplicate images found locally for an album. Note it does not include duplicates where the images are in different albums.\n"
               "that are found both locally and on SmugMug.\n\n"
@@ -194,4 +191,19 @@ def findDuplicateSmugMugImage():
         #print line
         reportRows.append(line)
     return ''.join(reportRows)
-        
+
+def findImagesinDbNotScannedThisRun():
+    rows = db.findImagesinDbNotScannedThisRun()
+    report = (
+              "The following table lists all the local images that had been found on a previous scan, that were not found on the last scan.\n"
+              "that are found both locally and on SmugMug.\n\n"
+              "Last Scanned On                 Filename                        Album                           Sub-Category                    Category                        \n"
+              "----------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
+              )
+    #print report
+    reportRows = [report]
+    for row in rows:
+        line = row[0].ljust(32)+row[1].ljust(32)+row[2].ljust(32)+(row[3].ljust(32) if row[3] <> None else " ".ljust(32))+(row[4].ljust(32) if row[4] <> None else " ".ljust(32))+"\n"
+        #print line
+        reportRows.append(line)
+    return ''.join(reportRows)

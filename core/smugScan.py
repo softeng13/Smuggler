@@ -70,7 +70,6 @@ def emptySmugMugTables():
 
 def getAllPictureInfo():
     #start fresh on this
-    print 'Starting to scan SmugMug.'
     emptySmugMugTables()
     
     #now get the albums 
