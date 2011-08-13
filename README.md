@@ -3,7 +3,7 @@ Smuggler
 
 *Smuggler is currently in alpha release and should be treated as such. It may contain catastrophic errors and/or bugs that may make it unusable at any given point in time.*
 
-Smuggler is an application that is designed with the goal of keeping your local image collection and the images on your SmugMug account in sync. Simply it is designed to make the process of keeping everything in sync much simpler and automate as much as possible. It is designed to has a web interface to allow you to run it either from your local system, or to install it on your system with the images and then manage it from another system. It should be fairly flexible.
+Smuggler is an application that is designed with the goal of keeping your local image collection and SmugMug account in sync. It is designed to have a web interface to allow you to run it either from your local system, or to install it on a seperate system with the images and then manage it from another system. 
 
 Features Currently Implemented:
 

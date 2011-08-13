@@ -44,15 +44,15 @@ class DBConnection():
         myLogger.debug("db location is :"+dbLocation)
         if not os.path.isfile(dbLocation):
             myLogger.debug("database did not exist, so creating empty version table")
-            conn = sqlite3.connect(dbLocation)
+            conn = sqlite3.connect(dbLocation, check_same_thread = False)
             #get the cursor
-            c = conn.cursor()
+            #c = conn.cursor()
             #Create version table
-            c.execute('''create table version (number integer)''')
+            conn.execute('''create table version (number integer)''')
             conn.commit()
-            c.close()
+            #c.close()
             conn.close()
-        self.connection = sqlite3.connect(dbLocation)
+        self.connection = sqlite3.connect(dbLocation, check_same_thread = False)
     
     def execute(self, query, params = None):
         if self.connection == None:
@@ -61,13 +61,15 @@ class DBConnection():
         if query == None:
             myLogger.warning("Execute was called without a query being passed in. Weird")
             return
-        cursor = self.connection.cursor()
+        #cursor = self.connection.cursor()
         if params == None:
             myLogger.debug("query : '%s'",query)
-            result = cursor.execute(query)
+            #result = cursor.execute(query)
+            result = self.connection.execute(query)
         else:
             myLogger.debug("query : '%s' with params '%s'", query, params)
-            result = cursor.execute(query, params)
+            #result = cursor.execute(query, params)
+            result = self.connection.execute(query, params)
         self.connection.commit()
         return result.fetchall()
 

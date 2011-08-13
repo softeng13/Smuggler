@@ -27,11 +27,13 @@ import smugScan
 import fileUtil
 import pictureReport
 import webbrowser
+import smugglerWeb
+import messaging
 
-from db import *
-from dbSchema import *
+import logging
 from lib.configobj import ConfigObj
 from lib.smugpy import SmugMug
+
 
 
 myLogger = logging.getLogger('core')
@@ -52,14 +54,14 @@ OAUTH_SECRET = "b308a33ffc2f417b4b1ba50e3933e0fa"
 
 smugmug = SmugMug(api_key=API_KEY, oauth_secret=OAUTH_SECRET, app_name="Smuggler")
 #the instance of the DBConnection class
-conn = DBConnection()
+conn = db.DBConnection()
 
 def loadConfig():
     """
     This will read in the configuration file and set the values to the 
     appropriate variables in the application for later use.
     """
-    configFile = ConfigObj(core.CONFIG_FILE)
+    configFile = ConfigObj(CONFIG_FILE)
     #load general settings
     general = configFile['GENERAL']
     global LOG_DIR
@@ -107,4 +109,4 @@ def checkOAuthConnection():
         myLogger.debug("OAUTH_TOKEN from db : "+oauthDetails[0])
         myLogger.debug("OAUTH_TOKEN_SECRET from db: "+oauthDetails[1])
         smugmug.set_oauth_token(oauthDetails[0], oauthDetails[1])
-        
+       

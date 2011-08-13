@@ -1,0 +1,121 @@
+$def with (form, url, authBad)
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Smuggler</title>
+<link rel="stylesheet" href="static/styles.css" type="text/css" />
+<!--
+sworm, a free CSS web template by spyka Webmaster (www.spyka.net)
+
+Download: http://www.spyka.net/web-templates/sworm/
+
+License: Creative Commons Attribution
+//-->
+</head>
+<body>
+<div id="container">
+	<div id="header">
+    	<h1><a href="/">Smuggler</a></h1>
+        <h2>Should we have a witty slogan?</h2>
+        <div class="clear"></div>
+    </div>
+    <div id="nav">
+    	<ul>
+        	<li class="start selected"><a href="/">Welcome</a></li>
+        </ul>
+    </div>
+    <div id="body">
+		<div id="content" style="width: 780px;">
+			<h2>Introduction</h2>
+            <p id="warning">Smuggler is currently in alpha release and should be treated as such. It may contain 
+            catastrophic errors and/or bugs that may make it unusable at any given point in time.</p>
+            <p>Smuggler is an application that is designed with the goal of keeping your local image 
+            collection and SmugMug account in sync. It is designed to have a web interface to allow
+             you to run it either from your local system, or to install it on a separate system with 
+             the images and then manage it from another system.</p>	
+    
+            <h3>Getting Started</h3>
+			<p>We need to gather a little information before Smuggler can get to work for you. It should be straight forward and only take a second.</p>
+			<fieldset class="form fields">
+	                <form id="configForm"  method="post">
+	                	<!-- Log Directory -->
+	                    <div class="field-pair">
+							<p>The local folder that you want Smuggler to store the logs it creates. These will be helpful 
+							if there are problems. The default is to create a log directory in the current working directory.</p>
+								$if form.log_dir.note <> None:
+									<span class="component-error">$:form.log_dir.note</span>
+									<label class="nocheck clearfix component-error" for="log_dir">
+								$else:
+									<label class="nocheck clearfix" for="log_dir">
+								
+								<span class="component-title">Log Directory:</span>
+								$:form.log_dir.render()								
+							</label>				
+						</div>
+	                	<!-- Data Directory -->
+	                    <div class="field-pair">
+							<p>The local folder that you want Smuggler to store the data it creates. Smuggler creates a small 
+							database to use to store information about what has happened. The default is to create a data 
+							directory in the current working directory.</p>
+								$if form.data_dir.note <> None:
+									<span class="component-error">$:form.data_dir.note</span>
+									<label class="nocheck clearfix component-error" for="data_dir">
+								$else:
+									<label class="nocheck clearfix" for="data_dir">	
+								
+								<span class="component-title">Data Directory:</span>
+								$:form.data_dir.render()
+							</label>						
+						</div>
+	                	<!-- Image Directory -->
+	                    <div class="field-pair">
+	                    	<p>The local folder that contains all your SmugMug images. You know, the ones you want to 
+	                    	keep in-sync with SmugMug. </p>
+								$if form.root_dir.note <> None:
+									<span class="component-error">$:form.root_dir.note</span>
+									<label class="nocheck clearfix component-error" for="root_dir">
+								$else:
+									<label class="nocheck clearfix" for="root_dir">	
+									
+							
+								<span class="component-title">Root Image Folder:</span>
+								$:form.root_dir.render()
+							</label>
+						</div>
+						<!-- OAuth Link -->
+						<div class="field-pair">
+							<p>SmugMug uses OAuth to authenticate applications so that you do not have to give Smuggler 
+							your user name and password. The link below will send you to SmugMug to perform this action.</p>
+								$if authBad:
+									<span class="component-error">Please click the link below to authenticate Smuggler.</span>
+									<label class="nocheck clearfix component-error" for="auth">
+								$else:
+									<label class="nocheck clearfix">
+								<span class="component-title">Authenticate Smuggler:</span>
+								<a href="$:url" target="_blank">Authenticate</a>
+							</label>
+						</div>
+						<div class="save">
+							$:form.Save.render()
+							<!-- <button id="save" name="save" class="formbutton" value="Send" type="submit">
+								<span>Save</span>
+							</button>-->
+						</div>
+	                </form>
+	            </fieldset>
+            
+            
+        </div>
+        
+    	<div class="clear"></div>
+    </div>
+    <div id="footer">
+        <div class="footer-bottom">
+            <p>Design by <a href="http://www.spyka.net" target="_blank">Free CSS Templates</a> | <a href="http://www.justfreetemplates.com" target="_blank">Free Web Templates</a></p>
+         </div>
+    </div>
+</div>
+</body>
+</html>

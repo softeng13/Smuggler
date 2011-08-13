@@ -20,64 +20,69 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 import logging
-import core
 import db
 import datetime
-import sys
+import threading
+import messaging
+import core
 
 myLogger = logging.getLogger('smugScan')
 
-def getAlbums():
-    albums = core.smugmug.albums_get(Extras="LastUpdated")
+class SmugMugScan(object):
+    def __init__(self):
+        self._thread = None
     
-    for album in albums["Albums"]:
-        title = album["Title"]
-        sys.stdout.write('\rGetting SmugMug Album Details: '.ljust(80))
-        sys.stdout.flush()
-        sys.stdout.write('\rGetting SmugMug Album Details: {0}'.format(title).ljust(80))
-        sys.stdout.flush()
-        try:
-            cat = album["Category"]["Name"]
-        except KeyError:
-            cat = None
-        try:
-            subCat = album["SubCategory"]["Name"]
-        except KeyError:
-            subCat = None
-        db.addSmugAlbum(cat, subCat, title, datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
-    sys.stdout.write('\rGetting SmugMug Album Details: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGetting SmugMug Album Details: Complete\n')
-    sys.stdout.flush()  
-    return albums
-
-def getPictures(album):
-    pictures = core.smugmug.images_get(AlbumID=album["id"], AlbumKey=album["Key"], Extras="MD5Sum,LastUpdated,FileName")
-    #print pictures
-    albumId = pictures["Album"]["id"]
-    for picture in pictures["Album"]["Images"]:
-        title = picture["FileName"]
-        sys.stdout.write('\rGetting SmugMug Picture Details: '.ljust(80))
-        sys.stdout.flush()
-        sys.stdout.write('\rGetting SmugMug Picture Details: {0}'.format(title).ljust(80))
-        sys.stdout.flush()
-        db.addSmugImage(albumId, datetime.datetime.strptime(picture["LastUpdated"],'%Y-%m-%d %H:%M:%S'), picture["MD5Sum"], picture["Key"], picture["id"], picture["FileName"])
+    def start(self):
+        if self._thread == None or not self._thread.isAlive():
+            messaging.messages.addInfo("SmugMug Scan has been Started.")
+            self._thread = _SmugScan()
+            self._thread.start()
+        else:
+            messaging.messages.addInfo("SmugMug Scan had already been Started.") 
     
-
-def emptySmugMugTables():
-    db.executeSql("DELETE FROM smug_album")
-    db.executeSql("DELETE FROM smug_image")
-
-def getAllPictureInfo():
-    #start fresh on this
-    emptySmugMugTables()
+    def finished(self):
+        return self._thread == None or not self._thread.isAlive()
     
-    #now get the albums 
-    albums = getAlbums()
-    for album in albums["Albums"]:
-        #and the pictures in each album
-        getPictures(album)
-    sys.stdout.write('\rGetting SmugMug Picture Details: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGetting SmugMug Picture Details: Complete\n')
-    sys.stdout.flush() 
+class _SmugScan(threading.Thread):
+    def run(self):
+        self._getAllPictureInfo()
+
+    def _getAlbums(self):
+        albums = core.smugmug.albums_get(Extras="LastUpdated")
+        
+        for album in albums["Albums"]:
+            title = album["Title"]
+            try:
+                cat = album["Category"]["Name"]
+            except KeyError:
+                cat = None
+            try:
+                subCat = album["SubCategory"]["Name"]
+            except KeyError:
+                subCat = None
+            db.addSmugAlbum(cat, subCat, title, datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
+        return albums
+    
+    def _getPictures(self,album):
+        pictures = core.smugmug.images_get(AlbumID=album["id"], AlbumKey=album["Key"], Extras="MD5Sum,LastUpdated,FileName")
+        albumId = pictures["Album"]["id"]
+        for picture in pictures["Album"]["Images"]:
+            db.addSmugImage(albumId, datetime.datetime.strptime(picture["LastUpdated"],'%Y-%m-%d %H:%M:%S'), picture["MD5Sum"], picture["Key"], picture["id"], picture["FileName"])
+        
+    
+    def _emptySmugMugTables(self):
+        db.executeSql("DELETE FROM smug_album")
+        db.executeSql("DELETE FROM smug_image")
+    
+    def _getAllPictureInfo(self):
+        #start fresh on this
+        self._emptySmugMugTables()
+        
+        #now get the albums 
+        albums = self._getAlbums()
+        for album in albums["Albums"]:
+            #and the pictures in each album
+            self._getPictures(album)
+        messaging.messages.addInfo('Finished Scanning SmugMug')
+
+smugScan = SmugMugScan()        
