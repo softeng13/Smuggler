@@ -42,15 +42,11 @@ default_log = ''.join([working_dir, '/log'])
 default_data = ''.join([working_dir, '/data']) 
 
 
-def make_text(string):
-    return string
-
 urls = (
-        '/notify','notify',
-        '/fullscan', 'fullscan',
-        '/localscan', 'localscan',
-        '/smugmugscan', 'smugmugscan',
-        '/home', 'home',
+        '/json/notify','notify',
+        '/json/fullscan', 'fullscan',
+        '/json/localscan', 'localscan',
+        '/json/smugmugscan', 'smugmugscan',
         '/examples', 'examples',
         '/setup', 'setup',
         '/(.*)', 'index'
@@ -59,6 +55,16 @@ render = web.template.render('template/')
 
 app = web.application(urls, globals())
 
+def run():
+    #web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0",8080))
+    app.run()
+
+###############################################################################
+#                                                                             #
+#    Below are all the forms used by various screens                          #
+#                                                                             #
+###############################################################################
+
 setup_form = form.Form(
                 web.form.Textbox('root_dir', form.notnull, form.Validator('The root image directory must already exist.', lambda path: os.path.isdir(path)), id='root_dir'),
                 web.form.Textbox('log_dir', form.notnull, form.Validator('The log directory must already exist.', lambda path: os.path.isdir(path)), id='log_dir', value = default_log),
@@ -66,44 +72,16 @@ setup_form = form.Form(
                 web.form.Button('Save', id='save', class_="formbutton")
                 )
 
-def run():
-    #web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0",8080))
-    app.run()
-
-
-class notify:
-    def GET(self):
-        send = []
-        
-        for message in messaging.messages.getMessages():
-            send.append({'type':message.type, 'message':message.message})
-        web.header('Content-Type', 'application/json')
-        
-        return json.dumps(send)
-    
-class fullscan:
-    def GET(self):
-        fileScan.localScan.start()
-        smugScan.smugScan.start()
-        web.header('Content-Type', 'application/json')
-        messages =["Passed along request to Scan everything."]
-        return json.dumps(messages)
-
-class localscan:
-    def GET(self):
-        fileScan.localScan.start()
-        web.header('Content-Type', 'application/json')
-        messages =["Passed along request to Scan Locally."]
-        return json.dumps(messages)
-    
-class smugmugscan:
-    def GET(self):
-        smugScan.smugScan.start()
-        web.header('Content-Type', 'application/json')
-        messages =["Passed along request to Scan SmugMug."]
-        return json.dumps(messages)
+###############################################################################
+#                                                                             #
+#    Below are all the classes to handle html requests                        #
+#                                                                             #
+###############################################################################
 
 class index:
+    """
+    The default screen and starting point for users.
+    """
     def GET(self, scan):
         print scan
         try:
@@ -118,6 +96,10 @@ class index:
             
     
 class setup:
+    """
+    This should only be used once when the application is initially installed.
+    The user will be redirected to here to setup everything how they  want.
+    """
     def GET(self):
         #/Users/jacobschoen/Desktop/pictures/SmugMug
         form = setup_form()
@@ -151,12 +133,63 @@ class setup:
         return render.setup(form, url, authBad)
 
 class examples:
+    """
+    Examples of how current css styles i am using effect different things.
+    """
     def GET(self):
         return render.examples()        
 
-class home:
-    def GET(self):
-        return render.home()
-    
+###############################################################################
+#                                                                             #
+#    Below are all the classes to handle json requests                        #
+#                                                                             #
+###############################################################################
 
+
+class notify:
+    """
+    Used to pass notifications to users of the application. Is returned as json.
+    """
+    def GET(self):
+        send = []
+        
+        for message in messaging.messages.getMessages():
+            send.append({'type':message.type, 'message':message.message})
+        web.header('Content-Type', 'application/json')
+        
+        return json.dumps(send)
+    
+class fullscan:
+    """
+    Used to initiate a scan of local and smugmug images. It returns json 
+    acknowledging the request.
+    """
+    def GET(self):
+        fileScan.localScan.start()
+        smugScan.smugScan.start()
+        web.header('Content-Type', 'application/json')
+        messages =["Passed along request to Scan everything."]
+        return json.dumps(messages)
+
+class localscan:
+    """
+    Used to initiate a scan of local images. It returns json 
+    acknowledging the request.
+    """
+    def GET(self):
+        fileScan.localScan.start()
+        web.header('Content-Type', 'application/json')
+        messages =["Passed along request to Scan Locally."]
+        return json.dumps(messages)
+    
+class smugmugscan:
+    """
+    Used to initiate a scan of smugmug images. It returns json 
+    acknowledging the request.
+    """
+    def GET(self):
+        smugScan.smugScan.start()
+        web.header('Content-Type', 'application/json')
+        messages =["Passed along request to Scan SmugMug."]
+        return json.dumps(messages)
     

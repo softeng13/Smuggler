@@ -3,7 +3,7 @@ $(document).ready(function(){
 	$("#fullscan").click(function(e) {
 		e.preventDefault();
 	    
-	    $.getJSON('fullscan', function(data) {
+	    $.getJSON('json/fullscan', function(data) {
 	    	$.each(data, function() {
 	    		  $.sticky(this);
 	    	});
@@ -14,7 +14,7 @@ $(document).ready(function(){
 	$("#localscan").click(function(e) {
 		e.preventDefault();
 	    
-	    $.getJSON('localscan', function(data) {
+	    $.getJSON('json/localscan', function(data) {
 	    	$.each(data, function() {
 	    		  $.sticky(this);
 	    	});
@@ -25,7 +25,7 @@ $(document).ready(function(){
 	$("#smugmugscan").click(function(e) {
 		e.preventDefault();
 	    
-	    $.getJSON('smugmugscan', function(data) {
+	    $.getJSON('json/smugmugscan', function(data) {
 	    	$.each(data, function() {
 	    		  $.sticky(this);
 	    	});
@@ -35,7 +35,7 @@ $(document).ready(function(){
 	
 	//loops to check for messages
 	setInterval(function(){
-		$.getJSON('notify', function(data) {
+		$.getJSON('json/notify', function(data) {
 	    	$.each(data, function() {
 	    		$.each(this, function(k, v) {
 	    			if (k == 'message')
