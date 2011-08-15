@@ -6,15 +6,36 @@ $var pagescript:  static/script-reports.js
 
 <div id="subnav">
 	<ul>
-    	<li class=""><a href="#">Report 1</a></li>
-        <li class=""><a href="#">Report 2</a></li>
-        <li class=""><a href="#">Report 3</a></li>
-        <li class=""><a href="#">Report 4</a></li>
+    	<li class=""><a href="#">Category</a></li>
+        <li class=""><a href="#">Filename</a></li>
+        <li class=""><a href="#">Local Albums</a></li>
+        <li class=""><a href="#">SmugMug Albums</a></li>
+        <li class=""><a href="#">Missing Pictures</a></li>
+        <li class=""><a href="#">Duplicate Local Image</a></li>
+        <li class=""><a href="#">Duplicate SmugMug Image</a></li>
     </ul>
 </div>
 
-<div id="content">
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sodales sem vel dui tristique in adipiscing justo viverra. Aliquam venenatis, lorem porttitor pharetra rutrum, dui metus tincidunt odio, eu adipiscing metus felis at elit. Aenean in nulla metus. Suspendisse accumsan pretium tincidunt. Donec porta, purus congue iaculis cursus, nisl justo condimentum quam, eget ultricies massa ante quis arcu. Pellentesque porta euismod libero nec pellentesque. Praesent lorem orci, accumsan nec fringilla id, consectetur in lectus. Donec tristique aliquet risus ut consequat. Pellentesque auctor rutrum auctor. Etiam dapibus commodo sapien et sagittis. Nulla pharetra magna porta leo vestibulum pulvinar. Ut posuere venenatis mauris, nec tristique sapien dapibus eget. Nam a consectetur risus. Duis imperdiet feugiat nulla, eu mattis purus convallis at. Sed purus elit, lobortis sed pulvinar in, ultricies eget purus.</p>
+<div id="content-full">
 
-<p>Donec consequat pharetra vehicula. Mauris convallis cursus aliquet. Aenean eu facilisis justo. Morbi vehicula purus sit amet odio pulvinar venenatis. In ornare dictum scelerisque. Nunc justo enim, volutpat quis porta eu, ornare adipiscing nisl. Nulla sit amet ligula sit amet risus scelerisque auctor. Donec nisl metus, tristique in scelerisque vel, convallis a turpis. In sit amet nisl nunc. Aliquam erat volutpat. Nullam quis eros vel ipsum blandit placerat sed et ante. Ut feugiat condimentum mi, at egestas enim porttitor eget. Nam sagittis, nibh non adipiscing gravida, elit neque rutrum eros, in suscipit nibh lectus et neque. Vivamus accumsan odio eget eros posuere quis elementum massa scelerisque. Sed diam velit, molestie ut posuere congue, laoreet ut enim. Praesent posuere semper elit, nec posuere mi sollicitudin vitae. Integer mauris lectus, aliquam in tristique a, posuere ac nunc. Integer faucibus, enim sit amet blandit elementum, ante nibh sodales libero, eget vestibulum arcu libero rutrum massa. </p>
+<h3>Mis-Matched Category Report</h3>
+<p>This report will list all the albums that are found locally and on SmugMug that have different Catgory and/or Subcategory.</p>
+
+<h3>Mis-Matched Filename Report</h3>
+<p>This report will list local images that have the same MD5 Checksum as an image on SmugMug, but they have different filenames.</p>
+
+<h3>Missing Local Albums Report</h3>
+<p>This report will list all the albums on SmugMug that could not be found locally. This does not include albums that are found locally under different category and/or sub-category.</p>
+
+<h3>Missing SmugMug Albums Report</h3>
+<p>This report will list all the albums found locally that could not be found on SmugMug. This does not include albums that are found on SmugMug under different category and/or sub-category.</p>
+
+<h3>Missing Pictures Report</h3>
+<p>This report lists the number of images that need to be uploaded or downloaded for albums that are found both locally and on SmugMug.</p>
+
+<h3>Duplicate Local Image Report</h3>
+<p>This report lists the duplicate images found locally for an album. Note it does not include duplicates where the images are in different albums.</p>
+
+<h3>Duplicate SmugMug Image Report</h3>
+<p>This report lists the duplicate images found on SmugMug for an album. Note it does not include duplicates where the images are in different albums.</p>
 </div>
