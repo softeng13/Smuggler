@@ -45,7 +45,7 @@ def logSetup(debug, console):
         #set up the logging to the console, use the same formatter as above
         #maybe we should use a different one, will see how it goes
         console = logging.StreamHandler()
-        console.setLevel(logging.DEBUG)
+        console.setLevel(logging.INFO)
         console.setFormatter(formatter)
         logging.getLogger('').addHandler(console)
 

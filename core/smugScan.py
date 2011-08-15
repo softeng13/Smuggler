@@ -28,17 +28,21 @@ import core
 
 myLogger = logging.getLogger('smugScan')
 
+threadLock = threading.Lock()
+
 class SmugMugScan(object):
     def __init__(self):
         self._thread = None
     
     def start(self):
+        threadLock.acquire()
         if self._thread == None or not self._thread.isAlive():
             messaging.messages.addInfo("SmugMug Scan has been Started.")
             self._thread = _SmugScan()
             self._thread.start()
         else:
             messaging.messages.addInfo("SmugMug Scan had already been Started.") 
+        threadLock.release()
     
     def finished(self):
         return self._thread == None or not self._thread.isAlive()

@@ -49,9 +49,11 @@ urls = (
         '/json/smugmugscan', 'smugmugscan',
         '/examples', 'examples',
         '/setup', 'setup',
-        '/(.*)', 'index'
+        '/', 'index',
+        '/reports', 'reports'
         )
-render = web.template.render('template/')
+render = web.template.render('template/', base='layout')
+render_plain = web.template.render('template/')
 
 app = web.application(urls, globals())
 
@@ -82,8 +84,7 @@ class index:
     """
     The default screen and starting point for users.
     """
-    def GET(self, scan):
-        print scan
+    def GET(self):
         try:
             #Don't particularly like put this test in here to check for 
             #first run, but couldn't find a better way yet
@@ -130,7 +131,14 @@ class setup:
         if core.smugmug.oauth_token == None:
             core.smugmug.auth_getRequestToken()
         url = core.smugmug.authorize("Full", "Modify")
-        return render.setup(form, url, authBad)
+        return render_plain.setup(form, url, authBad)
+
+class reports:
+    """
+    The default screen and starting point for users.
+    """
+    def GET(self):
+        return render.reports()
 
 class examples:
     """
@@ -170,6 +178,8 @@ class fullscan:
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan everything."]
         return json.dumps(messages)
+
+#localScan = fileScan.localScan
 
 class localscan:
     """

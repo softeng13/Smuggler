@@ -32,21 +32,25 @@ import messaging
 
 myLogger = logging.getLogger('fileScan')
 
+threadLock = threading.Lock()
 
 class LocalScan(object):
     def __init__(self):
-        self._thread = None
+        self._scanThread = None
     
     def start(self):
-        if self._thread == None or not self._thread.isAlive():
+        threadLock.acquire()
+        if self._scanThread == None or not self._scanThread.isAlive():
             messaging.messages.addInfo("Local Scan has been Started.")
-            self._thread = _FileScan()
-            self._thread.start()
+            self._scanThread = _FileScan()
+            self._scanThread.start()
+            myLogger.info("Local File Scan has been started. isAlive: %s", self._scanThread.isAlive())
         else:
-            messaging.messages.addInfo("Local Scan had already been Started.") 
+            messaging.messages.addInfo("!!! Local Scan had already been Started.") 
+        threadLock.release()
     
     def finished(self):
-        return self._thread == None or not self._thread.isAlive()
+        return self._scanThread == None or not self._scanThread.isAlive()
         
 class _FileScan(threading.Thread):
     def run(self):
@@ -63,6 +67,7 @@ class _FileScan(threading.Thread):
         return m.hexdigest()
 
     def _findPictures(self):
+        myLogger.info("_FileScan Started. %s",self.getName())
         now = datetime.datetime.now()
         for root, dirs, files in os.walk(core.PICTURE_ROOT):
             for name in files:

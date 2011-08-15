@@ -277,8 +277,6 @@ li ol, li ul {
 
 #body {
 	background: none;
-	margin:0 auto;
-	padding: 30px 12px 0;
 	width: 776px;
 	min-height: 100%;
 }
@@ -291,7 +289,7 @@ li ol, li ul {
 
 .sidebar {
 	width: 200px;
-	padding: 10px 0 0;
+	padding: 30px 0 0;
 	float: right;
 }
 
@@ -450,6 +448,55 @@ li ol, li ul {
 #warning {
 	font-style: italic;
 	font-weight: bold;
+}
+
+
+
+#subnav {
+	height: 23px;
+	width: 800px;
+	background-color: #72B42D;
+	/*background-color: #cfcfcf;*/
+	margin-top: 3px;
+}
+
+#subnav ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+#subnav ul li {
+	float: left;
+	display: block;
+	padding: 0;
+}
+
+#subnav ul li a:hover, #subnav ul li.selected {
+	background-color:#cfcfcf;
+}
+
+#subnav ul li a {
+	color: #FFFFFF;
+	display: block;
+	border-right: 1px solid #fff;
+	font-size: 10px;
+	font-weight: bold;
+	padding: 5px 10px;
+	text-decoration: none;
+}
+
+#subnav ul li.start a {
+	border-left: none;
+}
+
+#subnav ul li.end a {
+	border-right: none;
+}
+
+#subnav ul li a:hover {
+	color: #fff;
+	text-decoration: underline;
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
