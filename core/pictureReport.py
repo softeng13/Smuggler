@@ -111,7 +111,7 @@ def findMisatchedFilenamesHtml():
     columns = ["Local File Name","SmugMug File Name","Local Category","Local SubCategory","Local Album"]
     return getTable(columns, rows)
 
-def findMissingLocalAlbums():
+def findMissingLocalAlbumsHtml():
     """
     list of albums that are on smug mug that are not found locally. This would
     exclude albums that are local but under different category and sub-category
@@ -121,7 +121,7 @@ def findMissingLocalAlbums():
     columns = ["SmugMug Category","SmugMug SubCategory","SmugMug Album","# of Images"]
     return getTable(columns, rows)
 
-def findMissingSmugMugAlbums():
+def findMissingSmugMugAlbumsHtml():
     """
     list of albums that are found local but not found on smug mug. This would
     exclude albums that are local but under different category and sub-category
@@ -131,7 +131,7 @@ def findMissingSmugMugAlbums():
     columns = ["Local Category","Local SubCategory","Local Album","# of Images"]
     return getTable(columns, rows)
  
-def findMissingPictures():
+def findMissingPicturesHtml():
     """
     list by album show the number of images that are not in both. This will
     only include albums that are in both
@@ -141,17 +141,17 @@ def findMissingPictures():
     columns = ["Album","Need Upload","Need Download"]
     return getTable(columns, rows)
 
-def findDuplicateLocalImage():
+def findDuplicateLocalImageHtml():
     rows = db.findDuplicateLocalImage()
     columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
     return getTable(columns, rows)
 
-def findDuplicateSmugMugImage():
+def findDuplicateSmugMugImageHtml():
     rows = db.findDuplicateSmugMugImage()
     columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
     return getTable(columns, rows)
 
-def findImagesinDbNotScannedThisRun():
+def findImagesinDbNotScannedThisRunHtml():
     rows = db.findImagesinDbNotScannedThisRun()
     columns = ["Last Scanned On","Filename","Album","SubCategory","Category"]
     return getTable(columns, rows)
