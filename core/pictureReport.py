@@ -74,17 +74,7 @@ def getResultRow(columns, css):
     result = result + "</tr>"
     return result
 
-def findMismatchedCategoriesHtml():
-    """
-    list of albums by name that exist both locally and on smug mug that have 
-    different category and/or sub-category. 
-    Columns: album name, local category, local sub-category, smug category, 
-             smug sub-category
-    """
-    rows = db.findMismatchedCategories()
-    
-    columns = ["Album Name","Local Category","Local SubCategory","SmugMug Category","SmugMug SubCategory"]
-    
+def getTable(columns, rows):
     table = "<table>"
     table = table + getHeaderRow(columns) + "<tbody>"
     css = 'odd'
@@ -99,7 +89,7 @@ def findMismatchedCategoriesHtml():
     myLogger.debug(table)
     return table
 
-def findMismatchedCategories():
+def findMismatchedCategoriesHtml():
     """
     list of albums by name that exist both locally and on smug mug that have 
     different category and/or sub-category. 
@@ -107,20 +97,10 @@ def findMismatchedCategories():
              smug sub-category
     """
     rows = db.findMismatchedCategories()
-    report = (
-              "The following table lists all the albums that are both located in SmugMug and Locally but their Category and/or sub-categories do not match.\n\n"
-              "Album Name                      Local Category                  Local SubCategory               SmugMug Category                SmugMug Category\n"
-              "---------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = row[0].ljust(32)+row[1].ljust(32)+row[2].ljust(32)+row[3].ljust(32)+row[4].ljust(32)+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
+    columns = ["Album Name","Local Category","Local SubCategory","SmugMug Category","SmugMug SubCategory"]
+    return getTable(columns, rows)
 
-def findMisatchedFilenames():
+def findMisatchedFilenamesHtml():
     """
     list of local images that have the same md5sum as an image in smug mug, but they 
     have different filenames. 
@@ -128,18 +108,8 @@ def findMisatchedFilenames():
              smug category, smug sub-category, smug filename
     """
     rows = db.findMisatchedFilenames()
-    report = (
-              "The following table lists all the local images that have the same MD5 Checksum as an image on SmugMug, but they have different filenames.\n\n"
-              "Local File Name                 SmugMug File Name               Local Category                  Local Sub-Category              Local Album                     \n"
-              "----------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = row[0].ljust(32)+row[1].ljust(32)+(row[2].ljust(32) if row[2] <> None else " ".ljust(32))+(row[3].ljust(32) if row[3] <> None else " ".ljust(32))+row[4].ljust(32)+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
+    columns = ["Local File Name","SmugMug File Name","Local Category","Local SubCategory","Local Album"]
+    return getTable(columns, rows)
 
 def findMissingLocalAlbums():
     """
@@ -148,19 +118,8 @@ def findMissingLocalAlbums():
     Columns: category, sub-category, smug album, number of photos
     """
     rows = db.findMissingLocalAlbums()
-    report = (
-              "The following table lists all the albums on SmugMug that could not be found locally. This does not include albums that are found\n"
-              "locally under different category and/or sub-category.\n\n"
-              "SmugMug Category                SmugMug Sub-Category            SmugMug Album                   # of Images                     \n"
-              "--------------------------------------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = (row[0].ljust(32) if row[0] <> None else " ".ljust(32))+(row[1].ljust(32) if row[1] <> None else " ".ljust(32))+row[2].ljust(32)+str(row[3]).ljust(32)+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
+    columns = ["SmugMug Category","SmugMug SubCategory","SmugMug Album","# of Images"]
+    return getTable(columns, rows)
 
 def findMissingSmugMugAlbums():
     """
@@ -169,19 +128,8 @@ def findMissingSmugMugAlbums():
     Columns: category, sub-category, local album, number of photos    
     """
     rows = db.findMissingSmugMugAlbums()
-    report = (
-              "The following table lists all the albums found locally that could not be found on SmugMug. This does not include albums that are\n"
-              "found locally under different category and/or sub-category.\n\n"
-              "Local Category                  Local Sub-Category              Local Album                     # of Images                     \n"
-              "--------------------------------------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = (row[0].ljust(32) if row[0] <> None else " ".ljust(32))+(row[1].ljust(32) if row[1] <> None else " ".ljust(32))+row[2].ljust(32)+str(row[3]).ljust(32)+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
+    columns = ["Local Category","Local SubCategory","Local Album","# of Images"]
+    return getTable(columns, rows)
  
 def findMissingPictures():
     """
@@ -190,138 +138,20 @@ def findMissingPictures():
     Columns: album, different local photo count(need upload), different smug photo count(need download) 
     """
     rows = db.findMissingPictures()
-    report = (
-              "The following table lists the number of images that need to be uploaded or downloaded for albums\n"
-              "that are found both locally and on SmugMug.\n\n"
-              "Album                           Need Upload                     Need Download                   \n"
-              "------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = row[0].ljust(32)+str(row[1]).ljust(32)+str(row[2]).ljust(32)+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
+    columns = ["Album","Need Upload","Need Download"]
+    return getTable(columns, rows)
 
 def findDuplicateLocalImage():
     rows = db.findDuplicateLocalImage()
-    report = (
-              "The following table lists the duplicate images found locally for an album. Note it does not include duplicates where the images are in different albums.\n"
-              "that are found both locally and on SmugMug.\n\n"
-              "First Filename                  Second Filename                 Album                           Sub-Category                    Category                        \n"
-              "----------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = row[0].ljust(32)+row[1].ljust(32)+row[2].ljust(32)+(row[3].ljust(32) if row[3] <> None else " ".ljust(32))+(row[4].ljust(32) if row[4] <> None else " ".ljust(32))+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
+    columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
+    return getTable(columns, rows)
 
 def findDuplicateSmugMugImage():
     rows = db.findDuplicateSmugMugImage()
-    report = (
-              "The following table lists the duplicate images found on SmugMug for an album. Note it does not include duplicates where the images are in different albums.\n"
-              "that are found both locally and on SmugMug.\n\n"
-              "First Filename                  Second Filename                 Album                           Sub-Category                    Category                        \n"
-              "----------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = row[0].ljust(32)+row[1].ljust(32)+row[2].ljust(32)+(row[3].ljust(32) if row[3] <> None else " ".ljust(32))+(row[4].ljust(32) if row[4] <> None else " ".ljust(32))+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
+    columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
+    return getTable(columns, rows)
 
 def findImagesinDbNotScannedThisRun():
     rows = db.findImagesinDbNotScannedThisRun()
-    report = (
-              "The following table lists all the local images that had been found on a previous scan, that were not found on the last scan.\n"
-              "that are found both locally and on SmugMug.\n\n"
-              "Last Scanned On                 Filename                        Album                           Sub-Category                    Category                        \n"
-              "----------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
-              )
-    #print report
-    reportRows = [report]
-    for row in rows:
-        line = row[0].ljust(32)+row[1].ljust(32)+row[2].ljust(32)+(row[3].ljust(32) if row[3] <> None else " ".ljust(32))+(row[4].ljust(32) if row[4] <> None else " ".ljust(32))+"\n"
-        #print line
-        reportRows.append(line)
-    return ''.join(reportRows)
-
-def generateReports():
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding mismatched Categories'.ljust(80))
-    sys.stdout.flush()
-    mismatchedCategories = findMismatchedCategories()
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding mismatched Filenames'.ljust(80))
-    sys.stdout.flush()
-    mismatchedFilenames = findMisatchedFilenames()
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding Missing Local Albums'.ljust(80))
-    sys.stdout.flush()
-    missingLocal = findMissingLocalAlbums()
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding Missing SmugMug Albums'.ljust(80))
-    sys.stdout.flush()
-    missingSmug = findMissingSmugMugAlbums()
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding Missing Images'.ljust(80))
-    sys.stdout.flush()
-    missingImages = findMissingPictures()
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding Duplicate Local Images'.ljust(80))
-    sys.stdout.flush()
-    localDups = findDuplicateLocalImage()
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding Duplicate SmugMug Images'.ljust(80))
-    sys.stdout.flush()
-    smugDups = findDuplicateSmugMugImage()
-    
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Finding Images Missing from Last Scan'.ljust(80))
-    sys.stdout.flush()
-    deletes = findImagesinDbNotScannedThisRun()
-    
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Combining Reports'.ljust(80))
-    sys.stdout.flush()
-    report = [mismatchedCategories, "\n\n", 
-              mismatchedFilenames, "\n\n", 
-              missingLocal, "\n\n", 
-              missingSmug, "\n\n",
-              missingImages,"\n\n",
-              localDups,"\n\n",
-              smugDups, "\n\n",
-              deletes]
-    filename =core.DATA_DIR+'/report.txt'
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Writing Report to {0}'.format(filename).ljust(80))
-    sys.stdout.flush()
-    file = open(filename, 'w')
-    file.write(''.join(report))
-    file.close()
-    sys.stdout.write('\rGenerating Reports: '.ljust(80))
-    sys.stdout.flush()
-    sys.stdout.write('\rGenerating Reports: Complete (Report written to {0})\n'.format(filename))
+    columns = ["Last Scanned On","Filename","Album","SubCategory","Category"]
+    return getTable(columns, rows)
