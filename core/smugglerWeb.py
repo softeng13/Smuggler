@@ -32,6 +32,7 @@ import db
 import dbSchema
 import fileScan
 import messaging
+import pictureReport
 import smugScan
 
 
@@ -50,7 +51,10 @@ urls = (
         '/examples', 'examples',
         '/setup', 'setup',
         '/', 'index',
-        '/reports', 'reports'
+        '/reports', 'reports',
+        '/reports/category', 'reports_category',
+        '/table/categoryTable', 'categoryTable'
+        
         )
 render = web.template.render('template/', base='layout')
 render_plain = web.template.render('template/')
@@ -139,13 +143,24 @@ class reports:
     """
     def GET(self):
         return render.reports()
+    
+class reports_category:
+    """
+    The default screen and starting point for users.
+    """
+    def GET(self):
+        return render.reports_category()
 
 class examples:
     """
     Examples of how current css styles i am using effect different things.
     """
     def GET(self):
-        return render.examples()        
+        return render_plain.examples()    
+    
+class categoryTable:
+    def GET(self):
+        return pictureReport.findMismatchedCategoriesHtml()    
 
 ###############################################################################
 #                                                                             #

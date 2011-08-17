@@ -161,7 +161,7 @@ def findMismatchedCategories():
              smug sub-category
     """
     sql = (
-           "SELECT li.album, li.category as local_category, li.sub_category as local_sub_category, sa.category as smug_category, sa.sub_category as smug_sub_category "
+           "SELECT distinct li.album, li.category as local_category, li.sub_category as local_sub_category, sa.category as smug_category, sa.sub_category as smug_sub_category "
            "FROM local_image li "
            "  INNER JOIN smug_album sa ON sa.title = li.album "
            "WHERE li.category <> sa.category "

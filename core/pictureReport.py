@@ -57,6 +57,48 @@ def getCountOfSameFilesWithDifferentName():
         myLogger.debug(file)
     return len(files)
 
+
+def getHeaderRow(columns):
+    result = "<thead><tr>"
+    for column in columns:
+        add = "<th>"+column+"</th>"
+        result = result + add
+    result = result + "</tr></thead>"
+    return result
+
+def getResultRow(columns, css):
+    result = "<tr  class=\""+css+"\">"
+    for column in columns:
+        add = "<td>"+column+"</td>"
+        result = result + add
+    result = result + "</tr>"
+    return result
+
+def findMismatchedCategoriesHtml():
+    """
+    list of albums by name that exist both locally and on smug mug that have 
+    different category and/or sub-category. 
+    Columns: album name, local category, local sub-category, smug category, 
+             smug sub-category
+    """
+    rows = db.findMismatchedCategories()
+    
+    columns = ["Album Name","Local Category","Local SubCategory","SmugMug Category","SmugMug SubCategory"]
+    
+    table = "<table>"
+    table = table + getHeaderRow(columns) + "<tbody>"
+    css = 'odd'
+    for row in rows:
+        table = table + getResultRow(row,css)
+        if (css == 'odd'):
+            css = 'even'
+        else:
+            css ='odd'
+    
+    table = table + "</tbody></table>"
+    myLogger.debug(table)
+    return table
+
 def findMismatchedCategories():
     """
     list of albums by name that exist both locally and on smug mug that have 

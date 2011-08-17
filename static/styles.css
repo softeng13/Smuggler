@@ -24,13 +24,12 @@ table {
 }
 
 th, td {
-	padding: 10px 10px;
+	padding: 3px;
 }
 
 th {
 	color: #fff;
 	background: #72B42D none repeat-x scroll left top;
-	border-bottom: 2px solid #72B42D;
 }
 
 td {

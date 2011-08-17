@@ -2,11 +2,11 @@ $var title: Smuggler - Reports
 $var home: 
 $var reports: start selected
 $var config: 
-$var pagescript:  static/script-reports.js
+$var pagescript:  static/script.js
 
 <div id="subnav">
 	<ul>
-    	<li class=""><a href="#">Category</a></li>
+    	<li class=""><a href="/reports/category">Category</a></li>
         <li class=""><a href="#">Filename</a></li>
         <li class=""><a href="#">Local Albums</a></li>
         <li class=""><a href="#">SmugMug Albums</a></li>
@@ -17,6 +17,8 @@ $var pagescript:  static/script-reports.js
 </div>
 
 <div id="content-full">
+
+<p> The reports below are to help you find any potential sync issues before the application actually runs the sync process. It is really only necessary for the first run to make sure Smuggler does not make a mess of things.</p>
 
 <h3>Mis-Matched Category Report</h3>
 <p>This report will list all the albums that are found locally and on SmugMug that have different Catgory and/or Subcategory.</p>

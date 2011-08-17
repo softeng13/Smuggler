@@ -4,8 +4,8 @@ $def with (content)
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>$content.title</title>
-	<link rel="stylesheet" href="static/sticky.full.css" type="text/css" />
-	<link rel="stylesheet" href="static/styles.css" type="text/css" />
+	<link rel="stylesheet" href="/static/sticky.full.css" type="text/css" />
+	<link rel="stylesheet" href="/static/styles.css" type="text/css" />
 </head>
 <body>
 	<div id="container">
@@ -17,7 +17,7 @@ $def with (content)
 	    <div id="nav">
 	    	<ul>
 	        	<li class="$content.home"><a href="/">Home</a></li>
-	            <li class="$content.reports"><a href="reports">Reports</a></li>
+	            <li class="$content.reports"><a href="/reports">Reports</a></li>
 	            <li class="$content.config"><a href="#">Config</a></li>
 	        </ul>
 	    </div>
@@ -32,8 +32,8 @@ $def with (content)
 	    </div>
 	</div>
 	
-	<script type="text/javascript" src="static/jquery-1.6.2.min.js"></script>
-	<script type="text/javascript" src="static/sticky.full.js"></script>
+	<script type="text/javascript" src="/static/jquery-1.6.2.min.js"></script>
+	<script type="text/javascript" src="/static/sticky.full.js"></script>
 	<script type="text/javascript" src="$content.pagescript"></script>
 </body>
 </html>
