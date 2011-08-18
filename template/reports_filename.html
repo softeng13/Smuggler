@@ -1,13 +1,13 @@
-$var title: Smuggler - Mis-Matched Category Report
+$var title: Smuggler - Duplicate Local Image Report
 $var home: 
 $var reports: start selected
 $var config: 
-$var pagescript:  /static/script-reports-category.js
+$var pagescript:  /static/script-reports-filename.js
 
 <div id="subnav">
 	<ul>
-    	<li class="start selected"><a href="/reports/category">Category</a></li>
-        <li class=""><a href="/reports/filename">Filename</a></li>
+    	<li class=""><a href="/reports/category">Category</a></li>
+        <li class="start selected"><a href="/reports/filename">Filename</a></li>
         <li class=""><a href="/reports/localAlbum">Local Albums</a></li>
         <li class=""><a href="/reports/smugmugAlbum">SmugMug Albums</a></li>
         <li class=""><a href="/reports/missingImage">Missing Pictures</a></li>
@@ -17,9 +17,9 @@ $var pagescript:  /static/script-reports-category.js
 </div>
 
 <div id="content-full">
-	<h2>Mis-Matched Category Report</h2>
-	<p>This report will list all the albums that are found locally and on SmugMug that have different Catgory and/or Subcategory.</p>
-	
+	<h2>Mis-Matched Filename Report</h2>
+	<p>This report will list local images that have the same MD5 Checksum as an image on SmugMug, but they have different filenames.</p>
+
 	<div id="spinner"><img src="/static/spinner.gif" alt="Please Wait"></div>
 	<div id="results"></div>
 </div>

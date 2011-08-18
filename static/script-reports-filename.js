@@ -31,7 +31,7 @@ $(document).ready(function(){
     }
 
 	
-	$.get("/table/categoryTable", function(data) {
+	$.get("/table/filenameTable", function(data) {
 		$("#spinner").css("display", "block");
         $("#results").append(xml_to_string(data));
         $("#spinner").css("display", "none");

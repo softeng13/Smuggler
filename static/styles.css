@@ -193,6 +193,9 @@ li ol, li ul {
 	padding-top: 5px;
 }
 
+#spinner {
+	text-align: center;
+}
 
 #container {
 	width: 800px;

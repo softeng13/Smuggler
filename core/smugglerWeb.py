@@ -51,10 +51,23 @@ urls = (
         '/examples', 'examples',
         '/setup', 'setup',
         '/', 'index',
+        
         '/reports', 'reports',
         '/reports/category', 'reports_category',
-        '/table/categoryTable', 'categoryTable'
+        '/reports/filename', 'reports_filename',
+        '/reports/localAlbum', 'reports_localAlbum',
+        '/reports/smugmugAlbum', 'reports_smugmugAlbum',
+        '/reports/missingImage', 'reports_missingImage',
+        '/reports/duplicateLocalImage', 'reports_duplicateLocalImage',
+        '/reports/duplicateSmugmugImage', 'reports_duplicateSmugmugImage',
         
+        '/table/categoryTable', 'categoryTable',
+        '/table/filenameTable', 'filenameTable',
+        '/table/localAlbumTable', 'localAlbumTable',
+        '/table/smugmugAlbumTable', 'smugmugAlbumTable',
+        '/table/missingImageTable', 'missingImageTable',
+        '/table/duplicateLocalImageTable', 'duplicateLocalImageTable',
+        '/table/duplicateSmugmugImageTable', 'duplicateSmugmugImageTable'
         )
 render = web.template.render('template/', base='layout')
 render_plain = web.template.render('template/')
@@ -84,6 +97,13 @@ setup_form = form.Form(
 #                                                                             #
 ###############################################################################
 
+class examples:
+    """
+    Examples of how current css styles i am using effect different things.
+    """
+    def GET(self):
+        return render_plain.examples()   
+    
 class index:
     """
     The default screen and starting point for users.
@@ -99,7 +119,6 @@ class index:
         else:
             return render.index()
             
-    
 class setup:
     """
     This should only be used once when the application is initially installed.
@@ -138,30 +157,71 @@ class setup:
         return render_plain.setup(form, url, authBad)
 
 class reports:
-    """
-    The default screen and starting point for users.
-    """
     def GET(self):
         return render.reports()
     
 class reports_category:
-    """
-    The default screen and starting point for users.
-    """
     def GET(self):
-        return render.reports_category()
+        return render.reports_category() 
+    
+class reports_filename:
+    def GET(self):
+        return render.reports_filename() 
+    
+class reports_localAlbum:
+    def GET(self):
+        return render.reports_localAlbum() 
+    
+class reports_smugmugAlbum:
+    def GET(self):
+        return render.reports_smugmugAlbum() 
+    
+class reports_missingImage:
+    def GET(self):
+        return render.reports_missingImage() 
+    
+class reports_duplicateLocalImage:
+    def GET(self):
+        return render.reports_duplicateLocalImage() 
+    
+class reports_duplicateSmugmugImage:
+    def GET(self):
+        return render.reports_duplicateSmugmugImage() 
 
-class examples:
-    """
-    Examples of how current css styles i am using effect different things.
-    """
-    def GET(self):
-        return render_plain.examples()    
+###############################################################################
+#                                                                             #
+#    Below are all the classes to handle requests for report tables           #
+#                                                                             #
+###############################################################################
     
 class categoryTable:
     def GET(self):
         return pictureReport.findMismatchedCategoriesHtml()    
 
+class filenameTable:
+    def GET(self):
+        return pictureReport.findMisatchedFilenamesHtml()     
+
+class localAlbumTable:
+    def GET(self):
+        return pictureReport.findMissingLocalAlbumsHtml()     
+
+class smugmugAlbumTable:
+    def GET(self):
+        return pictureReport.findMissingSmugMugAlbumsHtml()     
+
+class missingImageTable:
+    def GET(self):
+        return pictureReport.findMissingPicturesHtml()     
+
+class duplicateLocalImageTable:
+    def GET(self):
+        return pictureReport.findDuplicateLocalImageHtml()    
+
+class duplicateSmugmugImageTable:
+    def GET(self):
+        return pictureReport.findDuplicateSmugMugImageHtml()  
+    
 ###############################################################################
 #                                                                             #
 #    Below are all the classes to handle json requests                        #
@@ -193,8 +253,6 @@ class fullscan:
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan everything."]
         return json.dumps(messages)
-
-#localScan = fileScan.localScan
 
 class localscan:
     """

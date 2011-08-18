@@ -1,25 +1,25 @@
-$var title: Smuggler - Mis-Matched Category Report
+$var title: Smuggler - Duplicate Local Image Report
 $var home: 
 $var reports: start selected
 $var config: 
-$var pagescript:  /static/script-reports-category.js
+$var pagescript:  /static/script-reports-missingImage.js
 
 <div id="subnav">
 	<ul>
-    	<li class="start selected"><a href="/reports/category">Category</a></li>
+    	<li class=""><a href="/reports/category">Category</a></li>
         <li class=""><a href="/reports/filename">Filename</a></li>
         <li class=""><a href="/reports/localAlbum">Local Albums</a></li>
         <li class=""><a href="/reports/smugmugAlbum">SmugMug Albums</a></li>
-        <li class=""><a href="/reports/missingImage">Missing Pictures</a></li>
+        <li class="start selected"><a href="/reports/missingImage">Missing Pictures</a></li>
         <li class=""><a href="/reports/duplicateLocalImage">Duplicate Local Image</a></li>
         <li class=""><a href="/reports/duplicateSmugmugImage">Duplicate SmugMug Image</a></li>
     </ul>
 </div>
 
 <div id="content-full">
-	<h2>Mis-Matched Category Report</h2>
-	<p>This report will list all the albums that are found locally and on SmugMug that have different Catgory and/or Subcategory.</p>
-	
+	<h2>Missing Pictures Report</h2>
+	<p>This report lists the number of images that need to be uploaded or downloaded for albums that are found both locally and on SmugMug.</p>
+
 	<div id="spinner"><img src="/static/spinner.gif" alt="Please Wait"></div>
 	<div id="results"></div>
 </div>

@@ -29,13 +29,17 @@ $(document).ready(function(){
             return "";
         }
     }
-
 	
-	$.get("/table/categoryTable", function(data) {
+	
+	
+	$.get("/table/duplicateLocalImageTable", function(data) {
 		$("#spinner").css("display", "block");
         $("#results").append(xml_to_string(data));
         $("#spinner").css("display", "none");
     });
+	
+
+	
 
 
 });
