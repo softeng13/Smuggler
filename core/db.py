@@ -245,6 +245,7 @@ def findMissingPictures():
            "FROM local_image li "
            "    INNER JOIN smug_album on title = li.album "
            "GROUP BY li.album "
+           "HAVING need_upload > 0 OR need_download > 0 "
            "ORDER BY need_upload desc, need_download desc"
           ) 
     result = core.conn.execute(sql)
