@@ -19,6 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 SOFTWARE.
 '''
+import core
 import web
 import logging
 import os
@@ -27,7 +28,6 @@ import json
 from web import form
 from lib import smugpy
 
-import core
 import db
 import dbSchema
 import fileScan
@@ -48,9 +48,14 @@ urls = (
         '/json/fullscan', 'fullscan',
         '/json/localscan', 'localscan',
         '/json/smugmugscan', 'smugmugscan',
+        '/json/rootdir', 'rootdir',
+        '/json/logdir', 'logdir',
+        '/json/datadir', 'datadir',
+        
         '/examples', 'examples',
         '/setup', 'setup',
         '/', 'index',
+        '/config', 'config',
         
         '/reports', 'reports',
         '/reports/category', 'reports_category',
@@ -90,6 +95,15 @@ setup_form = form.Form(
                 web.form.Textbox('data_dir', form.notnull, form.Validator('The data directory must already exist.', lambda path: os.path.isdir(path)), id='data_dir', value = default_data),
                 web.form.Button('Save', id='save', class_="formbutton")
                 )
+
+    
+config_form = form.Form(
+                web.form.Textbox('root_dir', form.notnull, form.Validator('The root image directory must already exist.', lambda path: os.path.isdir(path)), id='root_dir'),
+                web.form.Textbox('log_dir', form.notnull, form.Validator('The log directory must already exist.', lambda path: os.path.isdir(path)), id='log_dir'),
+                web.form.Textbox('data_dir', form.notnull, form.Validator('The data directory must already exist.', lambda path: os.path.isdir(path)), id='data_dir'),
+                web.form.Button('Save', id='save', class_="formbutton")
+                )
+
 
 ###############################################################################
 #                                                                             #
@@ -155,6 +169,39 @@ class setup:
             core.smugmug.auth_getRequestToken()
         url = core.smugmug.authorize("Full", "Modify")
         return render_plain.setup(form, url, authBad)
+
+class config:    
+    def GET(self):
+        myLogger.info(core.PICTURE_ROOT)
+        form = config_form()
+        return self._GET(form, False, core.PICTURE_ROOT)
+    
+    def POST(self): 
+        form = config_form()
+        if not form.validates(): 
+            return self._GET(form, False, '')
+        else:
+            try:
+                core.smugmug.auth_getAccessToken()
+            except smugpy.SmugMugException:
+                return self._GET(form, True, '')
+            else:
+                #self.first = False
+                core.PICTURE_ROOT  = form.value['root_dir']
+                core.LOG_DIR = form.value['log_dir']
+                core.DATA_DIR = form.value['data_dir']
+                core.saveConfig()
+                myLogger.info("Config file Created.")
+                dbSchema.upgradeSchema()
+                myLogger.info("Database started.")
+                db.setOAuthConnectionDetails(core.smugmug.oauth_token, core.smugmug.oauth_token_secret)
+                return self._GET(form, True, '')
+    
+    def _GET(self, form, authBad, picRoot):
+        if core.smugmug.oauth_token == None:
+            core.smugmug.auth_getRequestToken()
+        url = core.smugmug.authorize("Full", "Modify")
+        return render.config(form, url, authBad, picRoot)
 
 class reports:
     def GET(self):
@@ -275,4 +322,21 @@ class smugmugscan:
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan SmugMug."]
         return json.dumps(messages)
+
+class rootdir:
+    def GET(self):
+        web.header('Content-Type', 'application/json')
+        messages =[core.PICTURE_ROOT]
+        return json.dumps(messages)
+
+class datadir:
+    def GET(self):
+        web.header('Content-Type', 'application/json')
+        messages =[core.DATA_DIR]
+        return json.dumps(messages)
     
+class logdir:
+    def GET(self):
+        web.header('Content-Type', 'application/json')
+        messages =[core.LOG_DIR]
+        return json.dumps(messages)

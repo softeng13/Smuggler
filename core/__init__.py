@@ -27,7 +27,6 @@ import smugScan
 import fileUtil
 import pictureReport
 import webbrowser
-import smugglerWeb
 import messaging
 
 import logging
@@ -48,6 +47,8 @@ LOG_DIR = "log"
 DATA_DIR = "data"
 #USER
 PICTURE_ROOT = ""
+
+import smugglerWeb
 
 API_KEY = "RXgvpRaLqaQdEgoKQhaQZZiqiItVByuS"
 OAUTH_SECRET = "b308a33ffc2f417b4b1ba50e3933e0fa"

@@ -68,6 +68,7 @@ class _FileScan(threading.Thread):
 
     def _findPictures(self):
         myLogger.info("_FileScan Started. %s",self.getName())
+        myLogger.info("Starting file scan at => %s", core.PICTURE_ROOT)
         now = datetime.datetime.now()
         for root, dirs, files in os.walk(core.PICTURE_ROOT):
             for name in files:

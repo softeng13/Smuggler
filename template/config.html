@@ -1,0 +1,75 @@
+$def with (form, url, authBad, picRoot)
+$var title: Smuggler - Configuration Settings
+$var home: 
+$var reports:
+$var config: start selected
+$var pagescript: /static/script-config.js
+
+<div id="content-full">
+	<fieldset class="form fields">
+		<form id="configForm"  method="post">
+	  		<!-- Log Directory -->
+	        <div class="field-pair">
+				<p>The local folder that you want Smuggler to store the logs it creates. These will be helpful 
+				if there are problems. The default is to create a log directory in the current working directory.</p>
+					$if form.log_dir.note <> None:
+						<span class="component-error">$:form.log_dir.note</span>
+						<label class="nocheck clearfix component-error" for="log_dir">
+					$else:
+						<label class="nocheck clearfix" for="log_dir">
+			
+					<span class="component-title">Log Directory:</span>
+					$:form.log_dir.render()								
+				</label>				
+			</div>
+	        <!-- Data Directory -->
+	        <div class="field-pair">
+				<p>The local folder that you want Smuggler to store the data it creates. Smuggler creates a small 
+				database to use to store information about what has happened. The default is to create a data 
+				directory in the current working directory.</p>
+					$if form.data_dir.note <> None:
+						<span class="component-error">$:form.data_dir.note</span>
+						<label class="nocheck clearfix component-error" for="data_dir">
+					$else:
+						<label class="nocheck clearfix" for="data_dir">	
+					
+					<span class="component-title">Data Directory:</span>
+					$:form.data_dir.render()
+				</label>						
+			</div>
+	        <!-- Image Directory -->
+	        <div class="field-pair">
+	          	<p>The local folder that contains all your SmugMug images. You know, the ones you want to 
+	          	keep in-sync with SmugMug. </p>
+					$if form.root_dir.note <> None:
+						<span class="component-error">$:form.root_dir.note</span>
+						<label class="nocheck clearfix component-error" for="root_dir">
+					$else:
+						<label class="nocheck clearfix" for="root_dir">	
+						
+				
+					<span class="component-title">Root Image Folder:</span>
+					$:form.root_dir.render()
+				</label>
+			</div>
+			<!-- OAuth Link -->
+			<div class="field-pair">
+				<p>SmugMug uses OAuth to authenticate applications so that you do not have to give Smuggler 
+				your user name and password. The link below will send you to SmugMug to perform this action.</p>
+					$if authBad:
+						<span class="component-error">Please click the link below to authenticate Smuggler.</span>
+						<label class="nocheck clearfix component-error" for="auth">
+					$else:
+						<label class="nocheck clearfix">
+					<span class="component-title">Authenticate Smuggler:</span>
+					<a href="$:url" target="_blank">Authenticate</a>
+				</label>
+			</div>
+			<div class="save">
+				$:form.Save.render()
+			</div>
+		</form>
+	</fieldset>
+</div>
+
+	

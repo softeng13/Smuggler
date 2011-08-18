@@ -61,6 +61,9 @@ if __name__ == '__main__':
         #initialize db, only want to do this if the config is there already
         myLogger.info("Starting Smuggler, watch your back.")
         myLogger.debug("Configuration File Processed and Logging Initialized.")
+        myLogger.info("Picture Root => "+core.PICTURE_ROOT)
+        myLogger.info("Log Dir => "+core.LOG_DIR)
+        myLogger.info("Data Dir => "+core.DATA_DIR)
         dbSchema.upgradeSchema()
         myLogger.info("Database started.")
         
