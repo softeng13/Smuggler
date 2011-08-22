@@ -22,13 +22,17 @@ SOFTWARE.
 
 import logging
 import os
-import db
 
+import db
 
 myLogger = logging.getLogger('fileUtil')
 
-def fileRenamer():
-    files = db.findSameFilesWithDifferentName()
+def fileRenamer(conn):
+    """
+    I wrote this but am not using it yet, as I am not sure how I feel about 
+    doing this for them. Especially if I screw it somehow. So this may go away.
+    """
+    files = db.findSameFilesWithDifferentName(conn)
     for file in files:
         original = None
         new = None
@@ -46,5 +50,5 @@ def fileRenamer():
             #an idea let me know.
             myLogger.error("File '%s' was not there when we went to rename it", original)
             pass
-        db.deleteLocalImage(file[4])
+        db.deleteLocalImage(conn, file[4])
         

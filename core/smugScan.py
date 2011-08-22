@@ -19,74 +19,96 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 SOFTWARE.
 '''
+
 import logging
-import db
 import datetime
+import multiprocessing
+import thread
 import threading
+import time
+
+import db
 import messaging
-import core
 
 myLogger = logging.getLogger('smugScan')
 
-threadLock = threading.Lock()
+lock = threading.Lock()
 
 class SmugMugScan(object):
     def __init__(self):
-        self._thread = None
+        self._process = None
     
-    def start(self):
-        threadLock.acquire()
-        if self._thread == None or not self._thread.isAlive():
+    def start(self, smugmug, configobj, lock):
+        lock.acquire()
+        if self._process == None or not self._process.is_alive():
+            myLogger.info("Starting smugmug scan.")
             messaging.messages.addInfo("SmugMug Scan has been Started.")
-            self._thread = _SmugScan()
-            self._thread.start()
+            self._process = multiprocessing.Process(target=_getAllPictureInfo, args=(smugmug, configobj, lock))
+            self._process.start()
+            thread.start_new_thread(_checkProcess,(self._process,))
         else:
+            myLogger.info("Smugmug scan was already started.")
             messaging.messages.addInfo("SmugMug Scan had already been Started.") 
-        threadLock.release()
+        lock.release()
     
     def finished(self):
-        return self._thread == None or not self._thread.isAlive()
-    
-class _SmugScan(threading.Thread):
-    def run(self):
-        self._getAllPictureInfo()
+        return self._process == None or not self._process.is_alive()
 
-    def _getAlbums(self):
-        albums = core.smugmug.albums_get(Extras="LastUpdated")
-        
-        for album in albums["Albums"]:
-            title = album["Title"]
-            try:
-                cat = album["Category"]["Name"]
-            except KeyError:
-                cat = None
-            try:
-                subCat = album["SubCategory"]["Name"]
-            except KeyError:
-                subCat = None
-            db.addSmugAlbum(cat, subCat, title, datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
-        return albums
-    
-    def _getPictures(self,album):
-        pictures = core.smugmug.images_get(AlbumID=album["id"], AlbumKey=album["Key"], Extras="MD5Sum,LastUpdated,FileName")
-        albumId = pictures["Album"]["id"]
-        for picture in pictures["Album"]["Images"]:
-            db.addSmugImage(albumId, datetime.datetime.strptime(picture["LastUpdated"],'%Y-%m-%d %H:%M:%S'), picture["MD5Sum"], picture["Key"], picture["id"], picture["FileName"])
-        
-    
-    def _emptySmugMugTables(self):
-        db.executeSql("DELETE FROM smug_album")
-        db.executeSql("DELETE FROM smug_image")
-    
-    def _getAllPictureInfo(self):
-        #start fresh on this
-        self._emptySmugMugTables()
-        
-        #now get the albums 
-        albums = self._getAlbums()
-        for album in albums["Albums"]:
-            #and the pictures in each album
-            self._getPictures(album)
-        messaging.messages.addInfo('Finished Scanning SmugMug')
 
-smugScan = SmugMugScan()        
+smugScan = SmugMugScan()
+
+def _checkProcess(process):
+    while (process.is_alive()):
+        myLogger.debug("SmugMug Scan process is still running. Sleeping for 30.")
+        time.sleep(30)
+    messaging.messages.addInfo('Finished Scanning SmugMug')
+        
+    
+def _getAlbums(conn, smugmug, lock):
+    albums = smugmug.albums_get(Extras="LastUpdated")
+    
+    for album in albums["Albums"]:
+        title = album["Title"]
+        try:
+            cat = album["Category"]["Name"]
+        except KeyError:
+            cat = None
+        try:
+            subCat = album["SubCategory"]["Name"]
+        except KeyError:
+            subCat = None
+        lock.acquire()
+        db.addSmugAlbum(conn,cat, subCat, title, datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
+        lock.release() 
+    return albums
+
+def _getPictures(album, conn, smugmug, lock):
+    pictures = smugmug.images_get(AlbumID=album["id"], AlbumKey=album["Key"], Extras="MD5Sum,LastUpdated,FileName")
+    albumId = pictures["Album"]["id"]
+    for picture in pictures["Album"]["Images"]:
+        lock.acquire()
+        db.addSmugImage(conn,albumId, datetime.datetime.strptime(picture["LastUpdated"],'%Y-%m-%d %H:%M:%S'), picture["MD5Sum"], picture["Key"], picture["id"], picture["FileName"])
+        lock.release() 
+    
+
+def _emptySmugMugTables(conn, lock):
+    lock.acquire()
+    db.execute(conn,"DELETE FROM smug_album")
+    db.execute(conn,"DELETE FROM smug_image")
+    lock.release()
+
+def _getAllPictureInfo(smugmug, configobj, lock):
+    conn = db.getConn(configobj)
+    #start fresh on this
+    myLogger.debug("Emptying smugmug tables.")
+    _emptySmugMugTables(conn, lock)
+    
+    #now get the albums 
+    myLogger.debug("Getting album info from smugmug.")
+    albums = _getAlbums(conn, smugmug, lock)
+    for album in albums["Albums"]:
+        #and the pictures in each album
+        myLogger.debug("geting picture info for album '%s'", album["Title"])
+        _getPictures(album, conn, smugmug, lock)
+    conn.close()
+    myLogger.info('Finished Scanning SmugMug')

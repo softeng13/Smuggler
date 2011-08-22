@@ -1,16 +1,16 @@
 import os
 import errno
-import logging.handlers
+import logging
+import sys
 
 import core
-from core import smugglerWeb
-from core import dbSchema
 from core import db
+from core import smugglerWeb
 
 myLogger = logging.getLogger('Smuggler')
 
 
-def logSetup(debug, console):
+def logSetup(debug, console, configobj):
     """
     Setting up the logging the way we want it. Basically we will log to both
     the console and to a log file. The log files will max out at 10 megabytes
@@ -20,7 +20,7 @@ def logSetup(debug, console):
     
     #make sure there is a log directory to write to
     try:
-        os.makedirs(core.LOG_DIR)
+        os.makedirs(configobj.log_dir)
     except OSError, e:
         if e.errno != errno.EEXIST:
             raise
@@ -34,52 +34,45 @@ def logSetup(debug, console):
     else:
         logger.setLevel(logging.WARNING) 
     
-    formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    formatter = logging.Formatter('%(processName)s %(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     
     #File Handler Setup to create rotate log files at 10 megabytes and only keep 5
-    handler = logging.handlers.RotatingFileHandler(core.LOG_DIR+'/Smuggler.log', maxBytes=10*1024*1024, backupCount=5)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    #handler = logging.handlers.RotatingFileHandler(configobj.log_dir+'/Smuggler.log', maxBytes=10*1024*1024, backupCount=5)
+    #handler.setFormatter(formatter)
+    #logger.addHandler(handler)
     
-    if console:
+    #if console:
         #set up the logging to the console, use the same formatter as above
         #maybe we should use a different one, will see how it goes
-        console = logging.StreamHandler()
-        console.setLevel(logging.INFO)
-        console.setFormatter(formatter)
-        logging.getLogger('').addHandler(console)
+    console = logging.StreamHandler()
+    console.setLevel(logging.DEBUG)
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
 
-
-if __name__ == '__main__':
+def main():
     #load the config file if it is there
+    print sys.version
     try:
         configFile = open("config.ini")
         configFile.close()
-        core.loadConfig()
-        #initialize logging for the application
-        logSetup(True, True)
         #initialize db, only want to do this if the config is there already
         myLogger.info("Starting Smuggler, watch your back.")
         myLogger.debug("Configuration File Processed and Logging Initialized.")
-        myLogger.info("Picture Root => "+core.PICTURE_ROOT)
-        myLogger.info("Log Dir => "+core.LOG_DIR)
-        myLogger.info("Data Dir => "+core.DATA_DIR)
-        dbSchema.upgradeSchema()
-        myLogger.info("Database started.")
+        myLogger.info("Picture Root => "+core.configobj.picture_root)
+        myLogger.info("Log Dir => "+core.configobj.log_dir)
+        myLogger.info("Data Dir => "+core.configobj.data_dir)
         
-        oauthDetails = db.getOAuthConnectionDetails()
-        if (oauthDetails <> None):
-            myLogger.info("Setting found OAuth Details")
-            myLogger.debug("OAUTH_TOKEN from db : "+oauthDetails[0])
-            myLogger.debug("OAUTH_TOKEN_SECRET from db: "+oauthDetails[1])
-            core.smugmug.set_oauth_token(oauthDetails[0], oauthDetails[1])
-        else:
-            myLogger.warning("We have a db but do not have the oauth details. Weird.")
+        db.initDb(core.configobj)
+        myLogger.info("Database started.")
     except IOError:
-        pass
-    
+        pass #this just means a config file was not found, will happen on first run.
+   
     #initialize logging for the application
-    logSetup(True, True)
+    logSetup(True, True, core.configobj)
+    #initialize logging for the application
     myLogger.info("Starting Smuggler, watch your back.")
     #start web server
     smugglerWeb.run()
+
+if __name__ == '__main__':
+    main()

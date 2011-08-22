@@ -19,23 +19,29 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 SOFTWARE.
 '''
-import threading
+
+import logging
+import multiprocessing
+
+myLogger = logging.getLogger('messaging')
 
 INFO = 'info'
 ERROR = 'error'
 
-threadLock = threading.Lock()
+threadLock = multiprocessing.Lock()
 
 class MessageQueue(object):
     def __init__(self):
         self._queue = []
         
     def addInfo(self, message):
+        myLogger.info("Adding info message: %s", message)
         threadLock.acquire()
         self._queue.append(Message(message, INFO))
         threadLock.release()
     
     def addError(self, message):
+        myLogger.info("Adding error message: %s", message)
         threadLock.acquire()
         self._queue.append(Message(message, ERROR))
         threadLock.release()
@@ -44,6 +50,7 @@ class MessageQueue(object):
         threadLock.acquire()
         #make a copy of the queue
         copy = self._queue[:]
+        myLogger.info("Getting [%s] messages.", str(len(copy)))
         #reset the queue to be empty
         self._queue = []
         threadLock.release()

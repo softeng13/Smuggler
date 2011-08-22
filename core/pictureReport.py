@@ -20,8 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-import db
 import logging
+
+import db
 
 myLogger = logging.getLogger('pictureReport')
 
@@ -56,72 +57,72 @@ def getTable(columns, rows):
     myLogger.debug(table)
     return table
 
-def findMismatchedCategoriesHtml():
+def findMismatchedCategoriesHtml(conn):
     """
     list of albums by name that exist both locally and on smug mug that have 
     different category and/or sub-category. 
     """
-    rows = db.findMismatchedCategories()
+    rows = db.findMismatchedCategories(conn)
     columns = ["Album Name","Local Category","Local SubCategory","SmugMug Category","SmugMug SubCategory"]
     return getTable(columns, rows)
 
-def findMisatchedFilenamesHtml():
+def findMisatchedFilenamesHtml(conn):
     """
     list of local images that have the same md5sum as an image in smug mug, but they 
     have different filenames. 
     """
-    rows = db.findMisatchedFilenames()
+    rows = db.findMisatchedFilenames(conn)
     columns = ["Local File Name","SmugMug File Name","Local Category","Local SubCategory","Local Album"]
     return getTable(columns, rows)
 
-def findMissingLocalAlbumsHtml():
+def findMissingLocalAlbumsHtml(conn):
     """
     list of albums that are on smug mug that are not found locally. This would
     exclude albums that are local but under different category and sub-category
     """
-    rows = db.findMissingLocalAlbums()
+    rows = db.findMissingLocalAlbums(conn)
     columns = ["SmugMug Category","SmugMug SubCategory","SmugMug Album","# of Images"]
     return getTable(columns, rows)
 
-def findMissingSmugMugAlbumsHtml():
+def findMissingSmugMugAlbumsHtml(conn):
     """
     list of albums that are found local but not found on smug mug. This would
     exclude albums that are local but under different category and sub-category
     """
-    rows = db.findMissingSmugMugAlbums()
+    rows = db.findMissingSmugMugAlbums(conn)
     columns = ["Local Category","Local SubCategory","Local Album","# of Images"]
     return getTable(columns, rows)
  
-def findMissingPicturesHtml():
+def findMissingPicturesHtml(conn):
     """
     list by album show the number of images that are not in both. This will
     only include albums that are in both
     """
-    rows = db.findMissingPictures()
+    rows = db.findMissingPictures(conn)
     columns = ["Album","Need Upload","Need Download"]
     return getTable(columns, rows)
 
-def findDuplicateLocalImageHtml():
+def findDuplicateLocalImageHtml(conn):
     """
     list duplicate files found in a local album.
     """
-    rows = db.findDuplicateLocalImage()
+    rows = db.findDuplicateLocalImage(conn)
     columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
     return getTable(columns, rows)
 
-def findDuplicateSmugMugImageHtml():
+def findDuplicateSmugMugImageHtml(conn):
     """
     list duplicate files found in a SmugMug album.
     """
-    rows = db.findDuplicateSmugMugImage()
+    rows = db.findDuplicateSmugMugImage(conn)
     columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
     return getTable(columns, rows)
 
-def findImagesinDbNotScannedThisRunHtml():
+def findImagesinDbNotScannedThisRunHtml(conn):
     """
     Finds the images that where found on previous scans that was not
     found in the latest scan.
     """
-    rows = db.findImagesinDbNotScannedThisRun()
+    rows = db.findImagesinDbNotScannedThisRun(conn)
     columns = ["Last Scanned On","Filename","Album","SubCategory","Category"]
     return getTable(columns, rows)

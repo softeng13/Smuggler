@@ -20,88 +20,81 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-import errno
 import logging
 import os
 import sqlite3
-import core
+
+import dbSchema
 
 myLogger = logging.getLogger('db')
+
+def initDb(configobj):
+    dbLocation = configobj.data_dir+'/smuggler.db'
+    myLogger.debug("db location is :"+dbLocation)
+    conn = None
+    if not os.path.isfile(dbLocation):
+        conn = getConn(configobj)
+        myLogger.debug("database did not exist, so creating empty version table")
+        conn.execute('''create table version (number integer)''')
+        conn.commit()
+    if conn == None:
+        conn = getConn(configobj)
+    dbSchema.upgradeSchema(conn)    
+    conn.close()
         
-class DBConnection():
-    def __init__(self):
-        self.connection = None
-        
-    def delayedInit(self):
-        try:
-            myLogger.debug("making sure that the data dir exists")
-            os.makedirs(core.DATA_DIR)
-            myLogger.debug("data dir must not have existed since there was no error thrown, but it does now")
-        except OSError, e:
-            if e.errno != errno.EEXIST:
-                raise
-        dbLocation = core.DATA_DIR+'/smuggler.db'
-        myLogger.debug("db location is :"+dbLocation)
-        if not os.path.isfile(dbLocation):
-            myLogger.debug("database did not exist, so creating empty version table")
-            conn = sqlite3.connect(dbLocation, check_same_thread = False)
-            #get the cursor
-            #c = conn.cursor()
-            #Create version table
-            conn.execute('''create table version (number integer)''')
-            conn.commit()
-            #c.close()
-            conn.close()
-        self.connection = sqlite3.connect(dbLocation, check_same_thread = False)
-    
-    def execute(self, query, params = None):
-        if self.connection == None:
-            self.delayedInit()
+
+def getConn(configobj):
+    """
+    Returns a DB connection, you are responsible for closing it when you are 
+    done with it buddy. So don't forget.
+    """
+    dbLocation = configobj.data_dir+'/smuggler.db'
+    #conn = sqlite3.connect(dbLocation)
+    conn = sqlite3.connect(dbLocation, check_same_thread = False)
+    return conn
+
+def execute(conn, query, params = None):
         result = None
         if query == None:
             myLogger.warning("Execute was called without a query being passed in. Weird")
             return
-        #cursor = self.connection.cursor()
+        
+        
         if params == None:
             myLogger.debug("query : '%s'",query)
-            #result = cursor.execute(query)
-            result = self.connection.execute(query)
+            result = conn.execute(query)
         else:
             myLogger.debug("query : '%s' with params '%s'", query, params)
-            #result = cursor.execute(query, params)
-            result = self.connection.execute(query, params)
-        self.connection.commit()
+            result = conn.execute(query, params)
+        conn.commit()
         return result.fetchall()
-
-
-def executeSql(query, params = None):
-    return core.conn.execute(query, params)    
-
-def getDBVersion():
-    result = core.conn.execute("SELECT number FROM version")
+               
+          
+def getDBVersion(conn):
+    result = execute(conn, "SELECT number FROM version")
     if result is not None and len(result) > 0:
         return int(result[0][0])
     else:
         return 0
 
-def getOAuthConnectionDetails():
+def getOAuthConnectionDetails(conn):
     sql = "SELECT token, secret FROM oauth"
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     if result is not None and len(result) > 0:
         return result[0]
     else:
         return None
-def setOAuthConnectionDetails(token, secret):
+def setOAuthConnectionDetails(conn, token, secret):
     sql = "INSERT INTO oauth(token, secret) VALUES(?,?)"
     params = [token, secret]
-    core.conn.execute(sql, params)
+    execute(conn, sql, params)
 
-def addLocalImage(sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path, scan_time):    
+def addLocalImage(conn, sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path, scan_time):    
     
     params = [sub_category, category, album, last_updated, md5_sum, path_root, file_name, file_path, scan_time]
     sql = "INSERT INTO local_image(sub_category, category, album, last_updated, md5_sum, path_root, filename, modified, file_path, last_scanned) VALUES (:1,:2,:3,:4,:5,:6,:7,1, :8, :9)"
     try:
-        core.conn.execute(sql, params)
+        execute(conn, sql, params)
     except sqlite3.IntegrityError:
         sql = ("UPDATE local_image "
                "SET sub_category = :1, "
@@ -119,21 +112,21 @@ def addLocalImage(sub_category, category, album, last_updated, md5_sum, path_roo
                "    AND (:2 IS NULL OR category = :2) "
                "    AND album = :3 "
                "    AND filename = :7")
-        core.conn.execute(sql, params)
+        execute(conn, sql, params)
     
     
     
-def addSmugAlbum(category, sub_category, title, last_updated, key, id):
+def addSmugAlbum(conn, category, sub_category, title, last_updated, key, id):
     sql ="INSERT OR REPLACE INTO smug_album (category, sub_category, title, last_updated, key, id) VALUES (?,?,?,?,?,?)"
     params = [category, sub_category, title, last_updated, key, id]
-    core.conn.execute(sql, params)
+    execute(conn, sql, params)
     
-def addSmugImage(album_id, last_updated, md5_sum, key, id, filename):
+def addSmugImage(conn, album_id, last_updated, md5_sum, key, id, filename):
     sql = "INSERT OR REPLACE INTO smug_image (album_id, last_updated, md5_sum, key, id, filename) VALUES (?,?,?,?,?,?)"
     params = [album_id, last_updated, md5_sum, key, id, filename]
-    core.conn.execute(sql, params)
+    execute(conn, sql, params)
     
-def findSameFilesWithDifferentName():
+def findSameFilesWithDifferentName(conn):
     sql = (
            "SELECT DISTINCT li.filename, si.filename, li.path_root, li.file_path, li.rowid  " 
            "FROM local_image li "
@@ -142,18 +135,18 @@ def findSameFilesWithDifferentName():
            "WHERE li.filename <> si.filename"
            "  AND li.album = sa.title"
           )
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
-def deleteLocalImage(rowid):
+def deleteLocalImage(conn, rowid):
     sql = "delete from local_image where rowid = ?"
     params = [rowid]
-    core.conn.execute(sql, params)  
+    execute(conn, sql, params)  
     
 #
 # Report Queries
 #  
-def findMismatchedCategories():
+def findMismatchedCategories(conn):
     """
     list of albums by name that exist both locally and on smug mug that have 
     different category and/or sub-category. 
@@ -167,10 +160,10 @@ def findMismatchedCategories():
            "WHERE li.category <> sa.category "
            "   OR li.sub_category <> sa.sub_category"
           )
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
-def findMisatchedFilenames():
+def findMisatchedFilenames(conn):
     """
     list of local images that have the same md5sum as an image on SmugMug, but they 
     have different filenames. Note this will only list the files if they are in the 
@@ -186,10 +179,10 @@ def findMisatchedFilenames():
            "WHERE li.filename <> si.filename"
            "  AND li.album = sa.title"
           )
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
-def findMissingLocalAlbums():
+def findMissingLocalAlbums(conn):
     """
     list of albums that are on smug mug that are not found locally. This would
     exclude albums that are local but under different category and sub-category
@@ -202,10 +195,10 @@ def findMissingLocalAlbums():
             "WHERE sa.title NOT IN (SELECT distinct album FROM local_image) "
             "GROUP BY sa.category, sa.sub_category, sa.title"
            )
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
-def findMissingSmugMugAlbums():
+def findMissingSmugMugAlbums(conn):
     """
     list of albums that are found local but not found on smug mug. This would
     exclude albums that are local but under different category and sub-category
@@ -217,11 +210,11 @@ def findMissingSmugMugAlbums():
            "WHERE li.album NOT IN (SELECT distinct title FROM smug_album) "
            "GROUP BY li.category, li.sub_category, li.album"
           )
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
  
-def findMissingPictures():
+def findMissingPictures(conn):
     """
     list by album show the number of images that are not in both. This will
     only include albums that are in both
@@ -248,20 +241,20 @@ def findMissingPictures():
            "HAVING need_upload > 0 OR need_download > 0 "
            "ORDER BY need_upload desc, need_download desc"
           ) 
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
-def findDuplicateLocalImage():
+def findDuplicateLocalImage(conn):
     sql = (
           "SELECT li.filename, li2.filename, li.album, li.sub_category, li.category "
           "FROM local_image li "
           "  INNER JOIN local_image li2 on li.md5_sum = li2.md5_sum AND li.rowid < li2.rowid "
           "WHERE li.album = li2.album"
          )     
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
-def findDuplicateSmugMugImage():
+def findDuplicateSmugMugImage(conn):
     sql = (
            "SELECT si.filename, si2.filename, sa.title, sa.sub_category, sa.category "
            "FROM smug_image si "
@@ -270,16 +263,16 @@ def findDuplicateSmugMugImage():
            "   INNER JOIN smug_album sa2 on si2.album_id = sa2.id "
            "WHERE sa.id = sa2.id"
           )
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
 
         
-def findImagesinDbNotScannedThisRun():
+def findImagesinDbNotScannedThisRun(conn):
     sql = (
            " SELECT li.last_scanned, li.filename, li.album, li.sub_category, li.category" 
            " FROM local_image li"
            " WHERE li.last_scanned < (select max(last_scanned) from local_image)"
           )
-    result = core.conn.execute(sql)
+    result = execute(conn, sql)
     return result
     

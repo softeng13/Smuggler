@@ -19,24 +19,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 SOFTWARE.
 '''
-import core
-import web
-import logging
-import os
+
 import json
-
+import logging
+import multiprocessing
+import os
+import web
 from web import form
-from lib import smugpy
 
+import core
 import db
-import dbSchema
 import fileScan
+from lib import smugpy
 import messaging
 import pictureReport
 import smugScan
 
 
 myLogger = logging.getLogger('smugglerWeb')
+
+smugmug = smugpy.SmugMug(api_key=core.API_KEY, oauth_secret=core.OAUTH_SECRET, app_name="Smuggler")
 
 working_dir = os.getcwd()
 default_log = ''.join([working_dir, '/log']) 
@@ -149,32 +151,31 @@ class setup:
             return self._GET(form, False)
         else:
             try:
-                core.smugmug.auth_getAccessToken()
+                smugmug.auth_getAccessToken()
             except smugpy.SmugMugException:
                 return self._GET(form, True)
             else:
                 #self.first = False
-                core.PICTURE_ROOT  = form.value['root_dir']
-                core.LOG_DIR = form.value['log_dir']
-                core.DATA_DIR = form.value['data_dir']
-                core.saveConfig()
+                core.configobj.picture_root  = form.value['root_dir']
+                core.configobj.log_dir = form.value['log_dir']
+                core.configobj.data_dir = form.value['data_dir']
+                core.configobj.saveConfig()
                 myLogger.info("Config file Created.")
-                dbSchema.upgradeSchema()
+                db.initDb(core.configobj)
                 myLogger.info("Database started.")
-                db.setOAuthConnectionDetails(core.smugmug.oauth_token, core.smugmug.oauth_token_secret)
+                db.setOAuthConnectionDetails(db.getConn(core.configobj), smugmug.oauth_token, smugmug.oauth_token_secret)
                 return web.seeother('/')
     
     def _GET(self, form, authBad):
-        if core.smugmug.oauth_token == None:
-            core.smugmug.auth_getRequestToken()
-        url = core.smugmug.authorize("Full", "Modify")
+        if smugmug.oauth_token == None:
+            smugmug.auth_getRequestToken()
+        url = smugmug.authorize("Full", "Modify")
         return render_plain.setup(form, url, authBad)
 
 class config:    
     def GET(self):
-        myLogger.info(core.PICTURE_ROOT)
         form = config_form()
-        return self._GET(form, False, core.PICTURE_ROOT)
+        return self._GET(form, False, core.configobj.picture_root)
     
     def POST(self): 
         form = config_form()
@@ -182,25 +183,25 @@ class config:
             return self._GET(form, False, '')
         else:
             try:
-                core.smugmug.auth_getAccessToken()
+                smugmug.auth_getAccessToken()
             except smugpy.SmugMugException:
                 return self._GET(form, True, '')
             else:
                 #self.first = False
-                core.PICTURE_ROOT  = form.value['root_dir']
-                core.LOG_DIR = form.value['log_dir']
-                core.DATA_DIR = form.value['data_dir']
-                core.saveConfig()
+                core.configobj.picture_root  = form.value['root_dir']
+                core.configobj.log_dir = form.value['log_dir']
+                core.configobj.data_dir = form.value['data_dir']
+                core.configobj.saveConfig()
                 myLogger.info("Config file Created.")
-                dbSchema.upgradeSchema()
+                db.initDb(core.configobj)
                 myLogger.info("Database started.")
-                db.setOAuthConnectionDetails(core.smugmug.oauth_token, core.smugmug.oauth_token_secret)
+                db.setOAuthConnectionDetails(db.getConn(core.configobj), smugmug.oauth_token, smugmug.oauth_token_secret)
                 return self._GET(form, True, '')
     
     def _GET(self, form, authBad, picRoot):
-        if core.smugmug.oauth_token == None:
-            core.smugmug.auth_getRequestToken()
-        url = core.smugmug.authorize("Full", "Modify")
+        if smugmug.oauth_token == None:
+            smugmug.auth_getRequestToken()
+        url = smugmug.authorize("Full", "Modify")
         return render.config(form, url, authBad, picRoot)
 
 class reports:
@@ -243,31 +244,31 @@ class reports_duplicateSmugmugImage:
     
 class categoryTable:
     def GET(self):
-        return pictureReport.findMismatchedCategoriesHtml()    
+        return pictureReport.findMismatchedCategoriesHtml(db.getConn(core.configobj))    
 
 class filenameTable:
     def GET(self):
-        return pictureReport.findMisatchedFilenamesHtml()     
+        return pictureReport.findMisatchedFilenamesHtml(db.getConn(core.configobj))     
 
 class localAlbumTable:
     def GET(self):
-        return pictureReport.findMissingLocalAlbumsHtml()     
+        return pictureReport.findMissingLocalAlbumsHtml(db.getConn(core.configobj))     
 
 class smugmugAlbumTable:
     def GET(self):
-        return pictureReport.findMissingSmugMugAlbumsHtml()     
+        return pictureReport.findMissingSmugMugAlbumsHtml(db.getConn(core.configobj))     
 
 class missingImageTable:
     def GET(self):
-        return pictureReport.findMissingPicturesHtml()     
+        return pictureReport.findMissingPicturesHtml(db.getConn(core.configobj))     
 
 class duplicateLocalImageTable:
     def GET(self):
-        return pictureReport.findDuplicateLocalImageHtml()    
+        return pictureReport.findDuplicateLocalImageHtml(db.getConn(core.configobj))    
 
 class duplicateSmugmugImageTable:
     def GET(self):
-        return pictureReport.findDuplicateSmugMugImageHtml()  
+        return pictureReport.findDuplicateSmugMugImageHtml(db.getConn(core.configobj))  
     
 ###############################################################################
 #                                                                             #
@@ -295,8 +296,13 @@ class fullscan:
     acknowledging the request.
     """
     def GET(self):
-        fileScan.localScan.start()
-        smugScan.smugScan.start()
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        fileScan.localScan.start(core.configobj, lock)
+        smugScan.smugScan.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan everything."]
         return json.dumps(messages)
@@ -307,7 +313,8 @@ class localscan:
     acknowledging the request.
     """
     def GET(self):
-        fileScan.localScan.start()
+        lock = multiprocessing.Lock()
+        fileScan.localScan.start(core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan Locally."]
         return json.dumps(messages)
@@ -318,7 +325,12 @@ class smugmugscan:
     acknowledging the request.
     """
     def GET(self):
-        smugScan.smugScan.start()
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        smugScan.smugScan.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan SmugMug."]
         return json.dumps(messages)
@@ -326,17 +338,17 @@ class smugmugscan:
 class rootdir:
     def GET(self):
         web.header('Content-Type', 'application/json')
-        messages =[core.PICTURE_ROOT]
+        messages =[core.configobj.picture_root]
         return json.dumps(messages)
 
 class datadir:
     def GET(self):
         web.header('Content-Type', 'application/json')
-        messages =[core.DATA_DIR]
+        messages =[core.configobj.data_dir]
         return json.dumps(messages)
     
 class logdir:
     def GET(self):
         web.header('Content-Type', 'application/json')
-        messages =[core.LOG_DIR]
+        messages =[core.configobj.log_dir]
         return json.dumps(messages)
