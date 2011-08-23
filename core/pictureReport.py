@@ -23,39 +23,9 @@ SOFTWARE.
 import logging
 
 import db
+import webUtil
 
 myLogger = logging.getLogger('pictureReport')
-
-def getHeaderRow(columns):
-    result = "<thead><tr>"
-    for column in columns:
-        add = "<th>"+column+"</th>"
-        result = result + add
-    result = result + "</tr></thead>"
-    return result
-
-def getResultRow(columns, css):
-    result = "<tr  class=\""+css+"\">"
-    for column in columns:
-        add = "<td>"+str(column)+"</td>"
-        result = result + add
-    result = result + "</tr>"
-    return result
-
-def getTable(columns, rows):
-    table = "<table>"
-    table = table + getHeaderRow(columns) + "<tbody>"
-    css = 'odd'
-    for row in rows:
-        table = table + getResultRow(row,css)
-        if (css == 'odd'):
-            css = 'even'
-        else:
-            css ='odd'
-    
-    table = table + "</tbody></table>"
-    myLogger.debug(table)
-    return table
 
 def findMismatchedCategoriesHtml(conn):
     """
@@ -64,7 +34,7 @@ def findMismatchedCategoriesHtml(conn):
     """
     rows = db.findMismatchedCategories(conn)
     columns = ["Album Name","Local Category","Local SubCategory","SmugMug Category","SmugMug SubCategory"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)
 
 def findMisatchedFilenamesHtml(conn):
     """
@@ -73,7 +43,7 @@ def findMisatchedFilenamesHtml(conn):
     """
     rows = db.findMisatchedFilenames(conn)
     columns = ["Local File Name","SmugMug File Name","Local Category","Local SubCategory","Local Album"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)
 
 def findMissingLocalAlbumsHtml(conn):
     """
@@ -82,7 +52,7 @@ def findMissingLocalAlbumsHtml(conn):
     """
     rows = db.findMissingLocalAlbums(conn)
     columns = ["SmugMug Category","SmugMug SubCategory","SmugMug Album","# of Images"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)
 
 def findMissingSmugMugAlbumsHtml(conn):
     """
@@ -91,7 +61,7 @@ def findMissingSmugMugAlbumsHtml(conn):
     """
     rows = db.findMissingSmugMugAlbums(conn)
     columns = ["Local Category","Local SubCategory","Local Album","# of Images"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)
  
 def findMissingPicturesHtml(conn):
     """
@@ -100,7 +70,7 @@ def findMissingPicturesHtml(conn):
     """
     rows = db.findMissingPictures(conn)
     columns = ["Album","Need Upload","Need Download"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)
 
 def findDuplicateLocalImageHtml(conn):
     """
@@ -108,7 +78,7 @@ def findDuplicateLocalImageHtml(conn):
     """
     rows = db.findDuplicateLocalImage(conn)
     columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)
 
 def findDuplicateSmugMugImageHtml(conn):
     """
@@ -116,7 +86,7 @@ def findDuplicateSmugMugImageHtml(conn):
     """
     rows = db.findDuplicateSmugMugImage(conn)
     columns = ["First Filename","Second Filename","Album","SubCategory","Category"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)
 
 def findImagesinDbNotScannedThisRunHtml(conn):
     """
@@ -125,4 +95,4 @@ def findImagesinDbNotScannedThisRunHtml(conn):
     """
     rows = db.findImagesinDbNotScannedThisRun(conn)
     columns = ["Last Scanned On","Filename","Album","SubCategory","Category"]
-    return getTable(columns, rows)
+    return webUtil.getTable(columns, rows)

@@ -61,9 +61,7 @@ class LocalScan(object):
 localScan = LocalScan()
 
 def _checkProcess(process):
-    while (process.is_alive()):
-        myLogger.debug("Local Scan process is still running. Sleeping for 30.")
-        time.sleep(30)
+    process.join()
     messaging.messages.addInfo('Finished Scanning Local Files.')
 
 def _md5(file):

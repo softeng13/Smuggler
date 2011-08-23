@@ -1,6 +1,6 @@
 import os
 import errno
-import logging
+import logging.handlers
 import sys
 
 import core
@@ -37,17 +37,17 @@ def logSetup(debug, console, configobj):
     formatter = logging.Formatter('%(processName)s %(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     
     #File Handler Setup to create rotate log files at 10 megabytes and only keep 5
-    #handler = logging.handlers.RotatingFileHandler(configobj.log_dir+'/Smuggler.log', maxBytes=10*1024*1024, backupCount=5)
-    #handler.setFormatter(formatter)
-    #logger.addHandler(handler)
+    handler = logging.handlers.RotatingFileHandler(configobj.log_dir+'/Smuggler.log', maxBytes=10*1024*1024, backupCount=5)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     
-    #if console:
+    if console:
         #set up the logging to the console, use the same formatter as above
         #maybe we should use a different one, will see how it goes
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    console.setFormatter(formatter)
-    logging.getLogger('').addHandler(console)
+        console = logging.StreamHandler()
+        console.setLevel(logging.DEBUG)
+        console.setFormatter(formatter)
+        logging.getLogger('').addHandler(console)
 
 def main():
     #load the config file if it is there

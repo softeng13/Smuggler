@@ -573,3 +573,13 @@ label.component-error input {
 	background-color: #FBBBB9;
     border-color: #FF0000;
 }
+
+.hidden {
+	display: none;
+}
+
+#new_categories p,#new_subcategories p,#new_albums p {
+	margin-top: 20px;
+	margin-bottom: 0px;
+	font-weight: bold;
+}

@@ -46,5 +46,39 @@ $(document).ready(function(){
 
 	    });
 	}, 10000);
+	
+	function xml_to_string(xml_node)
+    {
+        if (xml_node.xml)
+            return xml_node.xml;
+        else if (XMLSerializer)
+        {
+            var xml_serializer = new XMLSerializer();
+            return xml_serializer.serializeToString(xml_node);
+        }
+        else
+        {
+            alert("ERROR: Extremely old browser");
+            return "";
+        }
+    }
+	
+	
+	$.get("/sync/newCategories", function(data) {
+		$("#new_categories").append(xml_to_string(data));
+    });
+        
+	
+	$.get("/sync/newSubCategories", function(data) {
+		$("#spinner").css("display", "block");
+        $("#new_subcategories").append(xml_to_string(data));
+        $("#spinner").css("display", "none");
+    });
+	
+	$.get("/sync/newAlbums", function(data) {
+		$("#spinner").css("display", "block");
+        $("#new_albums").append(xml_to_string(data));
+        $("#spinner").css("display", "none");
+    });
 
 });

@@ -28,7 +28,7 @@ import db
 myLogger = logging.getLogger('dbSchema')
 
 def upgradeSchema(conn):
-    schema = LocalImageSchema()
+    schema = SyncLogSchema()
     schema.upgrade(conn)
 
 class BaseSchema():
@@ -88,8 +88,6 @@ class SmugMugAlbumSchema(OAuthSchema):
     
     def _upgrade(self, version, conn):
         """
-        If the database version is not at least two, it will upgrade it to the 
-        version one database
         """
         OAuthSchema._upgrade(self,version, conn)
         if version < 3:
@@ -104,8 +102,6 @@ class SmugMugImageSchema(SmugMugAlbumSchema):
     
     def _upgrade(self, version, conn):
         """
-        If the database version is not at least two, it will upgrade it to the 
-        version one database
         """
         SmugMugAlbumSchema._upgrade(self,version, conn)
         if version < 4:
@@ -121,8 +117,6 @@ class LocalImageSchema(SmugMugImageSchema):
     
     def _upgrade(self, version, conn):
         """
-        If the database version is not at least two, it will upgrade it to the 
-        version one database
         """
         SmugMugImageSchema._upgrade(self,version, conn)
         if version < 5:
@@ -130,3 +124,38 @@ class LocalImageSchema(SmugMugImageSchema):
             params = [datetime.datetime(1960, 1,1,1,1,1,1)]
             db.execute(conn, "UPDATE local_image SET last_scanned = ?", params)
             self.incrementDBVerson(conn)
+
+class CategorySchema(LocalImageSchema):
+    """
+    """ 
+    def upgrade(self, conn):
+        self._upgrade(db.getDBVersion(conn), conn)
+    
+    def _upgrade(self, version, conn):
+        """
+        """
+        LocalImageSchema._upgrade(self,version, conn)
+        if version < 6:
+            db.execute(conn, "ALTER TABLE smug_album ADD category_id TEXT")
+            db.execute(conn, "ALTER TABLE smug_album ADD sub_category_id TEXT")
+            self.incrementDBVerson(conn)
+            
+
+class SyncLogSchema(CategorySchema):
+    """
+    """ 
+    def upgrade(self, conn):
+        self._upgrade(db.getDBVersion(conn), conn)
+    
+    def _upgrade(self, version, conn):
+        """
+        """
+        CategorySchema._upgrade(self,version, conn)
+        if version < 7:
+            db.execute(conn, "CREATE TABLE category_log (category_id, category TEXT, scan TIMESTAMP)")
+            db.execute(conn, "CREATE TABLE sub_category_log (sub_id, sub_category TEXT, category TEXT, scan TIMESTAMP)")
+            db.execute(conn, "CREATE TABLE album_log (album_id, name TEXT, category TEXT, sub_category TEXT, scan TIMESTAMP)")
+            db.execute(conn, "CREATE TABLE image_log (image_id, filename TEXT, album TEXT, category TEXT, sub_category TEXT, scan TIMESTAMP)")
+            self.incrementDBVerson(conn)
+
+

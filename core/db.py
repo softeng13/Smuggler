@@ -116,9 +116,9 @@ def addLocalImage(conn, sub_category, category, album, last_updated, md5_sum, pa
     
     
     
-def addSmugAlbum(conn, category, sub_category, title, last_updated, key, id):
-    sql ="INSERT OR REPLACE INTO smug_album (category, sub_category, title, last_updated, key, id) VALUES (?,?,?,?,?,?)"
-    params = [category, sub_category, title, last_updated, key, id]
+def addSmugAlbum(conn, category, category_id, sub_category, sub_category_id, title, last_updated, key, id):
+    sql ="INSERT OR REPLACE INTO smug_album (category, category_id, sub_category, sub_category_id, title, last_updated, key, id) VALUES (?,?,?,?,?,?,?,?)"
+    params = [category, category_id, sub_category, sub_category_id, title, last_updated, key, id]
     execute(conn, sql, params)
     
 def addSmugImage(conn, album_id, last_updated, md5_sum, key, id, filename):
@@ -275,4 +275,38 @@ def findImagesinDbNotScannedThisRun(conn):
           )
     result = execute(conn, sql)
     return result
+
+#Sync queries
+def missingSmugMugCategories(conn):
+    sql = (
+           " SELECT distinct category"
+           " FROM local_image" 
+           " WHERE category not in (SELECT category FROM smug_album WHERE category IS NOT NULL)"
+          )
+    result = execute(conn, sql)
+    return result
     
+def missingSmugMugSubCategories(conn):
+    sql = (
+           " SELECT DISTINCT sub_category, category,"
+           " (SELECT category_id FROM smug_album WHERE category = l.category) as cat_id,"
+           " (SELECT category_id FROM category_log WHERE category = l.category) as new_cat_id"
+           " FROM local_image l"
+           " WHERE sub_category not in (SELECT sub_category FROM smug_album WHERE sub_category IS NOT NULL)"
+          )
+    result = execute(conn, sql)
+    return result
+
+def missingSmugMugAlbums(conn):
+    sql = (
+           " SELECT distinct album, l.category,"
+           " (SELECT category_id FROM smug_album WHERE category = l.category) as cat_id,"
+           " (SELECT category_id FROM category_log WHERE category = l.category) as new_cat_id,"
+           " l.sub_category,"
+           " (SELECT sub_category_id FROM smug_album WHERE category = l.category) as cat_id,"
+           " (SELECT sub_id FROM sub_category_log WHERE sub_category = l.sub_category) as new_cat_id"
+           "  FROM local_image l"
+           "  WHERE album not in (SELECT title FROM smug_album)"
+          )
+    result = execute(conn, sql)
+    return result

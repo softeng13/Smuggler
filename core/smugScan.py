@@ -58,9 +58,7 @@ class SmugMugScan(object):
 smugScan = SmugMugScan()
 
 def _checkProcess(process):
-    while (process.is_alive()):
-        myLogger.debug("SmugMug Scan process is still running. Sleeping for 30.")
-        time.sleep(30)
+    process.join()
     messaging.messages.addInfo('Finished Scanning SmugMug')
         
     
@@ -68,17 +66,27 @@ def _getAlbums(conn, smugmug, lock):
     albums = smugmug.albums_get(Extras="LastUpdated")
     
     for album in albums["Albums"]:
+        myLogger.debug(album)
         title = album["Title"]
+    
+        cat = None
+        catid = None
+        subCat = None
+        subCatid = None
         try:
             cat = album["Category"]["Name"]
+            catid = album["Category"]["id"]
         except KeyError:
             cat = None
+            catid = None
         try:
             subCat = album["SubCategory"]["Name"]
+            subCatid = album["SubCategory"]["id"]
         except KeyError:
             subCat = None
+            subCatid = None
         lock.acquire()
-        db.addSmugAlbum(conn,cat, subCat, title, datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
+        db.addSmugAlbum(conn,cat, catid, subCat, subCatid, title, datetime.datetime.strptime(album["LastUpdated"],'%Y-%m-%d %H:%M:%S'), album["Key"], album["id"])
         lock.release() 
     return albums
 

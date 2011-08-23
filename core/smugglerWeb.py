@@ -34,6 +34,7 @@ from lib import smugpy
 import messaging
 import pictureReport
 import smugScan
+import syncUtil
 
 
 myLogger = logging.getLogger('smugglerWeb')
@@ -67,6 +68,10 @@ urls = (
         '/reports/missingImage', 'reports_missingImage',
         '/reports/duplicateLocalImage', 'reports_duplicateLocalImage',
         '/reports/duplicateSmugmugImage', 'reports_duplicateSmugmugImage',
+        
+        '/sync/newCategories', 'newCategories',
+        '/sync/newSubCategories', 'newSubCategories',
+        '/sync/newAlbums', 'newAlbums',
         
         '/table/categoryTable', 'categoryTable',
         '/table/filenameTable', 'filenameTable',
@@ -268,7 +273,25 @@ class duplicateLocalImageTable:
 
 class duplicateSmugmugImageTable:
     def GET(self):
-        return pictureReport.findDuplicateSmugMugImageHtml(db.getConn(core.configobj))  
+        return pictureReport.findDuplicateSmugMugImageHtml(db.getConn(core.configobj)) 
+    
+###############################################################################
+#                                                                             #
+#    Below are all the classes to handle sync requests                        #
+#                                                                             #
+###############################################################################
+
+class newCategories: 
+    def GET(self):
+        return syncUtil.missingSmugMugCategoriesHTML(db.getConn(core.configobj))
+     
+class newSubCategories: 
+    def GET(self):
+        return syncUtil.missingSmugMugSubCategoriesHTML(db.getConn(core.configobj)) 
+    
+class newAlbums: 
+    def GET(self):
+        return syncUtil.missingSmugMugAlbumsHTML(db.getConn(core.configobj)) 
     
 ###############################################################################
 #                                                                             #
