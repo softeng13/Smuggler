@@ -49,36 +49,49 @@ $(document).ready(function(){
 	
 	function xml_to_string(xml_node)
     {
-        if (xml_node.xml)
-            return xml_node.xml;
-        else if (XMLSerializer)
-        {
-            var xml_serializer = new XMLSerializer();
-            return xml_serializer.serializeToString(xml_node);
-        }
-        else
-        {
-            alert("ERROR: Extremely old browser");
-            return "";
+        try {
+			if (xml_node.xml)
+	            return xml_node.xml;
+	        else if (XMLSerializer)
+	        {
+	            var xml_serializer = new XMLSerializer();
+	            return xml_serializer.serializeToString(xml_node);
+	        }
+	        else
+	        {
+	            alert("ERROR: Extremely old browser");
+	            return "";
+	        }
+        } catch (e){
+        	alert ("ERROR")
+        	return ""
         }
     }
 	
-	
+
 	$.get("/sync/newCategories", function(data) {
-		$("#new_categories").append(xml_to_string(data));
+		if (xml_to_string(data).indexOf('parsererror') != -1){
+			$("#new_categories").addClass("hidden");
+		} else {
+			$("#new_categories").append(xml_to_string(data));
+		}
     });
         
 	
 	$.get("/sync/newSubCategories", function(data) {
-		$("#spinner").css("display", "block");
-        $("#new_subcategories").append(xml_to_string(data));
-        $("#spinner").css("display", "none");
+		if (xml_to_string(data).indexOf('parsererror') != -1){
+			$("#new_subcategories").addClass("hidden");
+		} else {
+			$("#new_subcategories").append(xml_to_string(data));
+		}
     });
 	
 	$.get("/sync/newAlbums", function(data) {
-		$("#spinner").css("display", "block");
-        $("#new_albums").append(xml_to_string(data));
-        $("#spinner").css("display", "none");
+		if (xml_to_string(data).indexOf('parsererror') != -1){
+			$("#new_albums").addClass("hidden");
+		} else {
+			$("#new_albums").append(xml_to_string(data));
+		}
     });
 
 });

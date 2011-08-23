@@ -26,16 +26,25 @@ import webUtil
 def missingSmugMugCategoriesHTML(conn):
     rows = db.missingSmugMugCategories(conn)
     columns = ["Category"]
-    return webUtil.getTable(columns, rows)
+    if len(rows) == 0:
+        return ""
+    else:
+        return webUtil.getTable(columns, rows)
 
 def missingSmugMugSubCategoriesHTML(conn):
     rows = db.missingSmugMugSubCategories(conn)
     columns = ["SubCategory", "Category", "Category Id", "New Category Id"]
     columnsclass = [None, None, "hidden", "hidden"]
-    return webUtil.getTable(columns, rows, columnsclass)
+    if len(rows) == 0:
+        return ""
+    else:
+        return webUtil.getTable(columns, rows, columnsclass)
 
 def missingSmugMugAlbumsHTML(conn):
     rows = db.missingSmugMugAlbums(conn)
     columns = ["Album", "Category", "Category Id", "New Category Id","SubCategory", "SubCategory Id", "New SubCategory Id"]
     columnsclass = [None, None, "hidden", "hidden",None, "hidden", "hidden"]
-    return webUtil.getTable(columns, rows, columnsclass)
+    if len(rows) == 0:
+        return ""
+    else:
+        return webUtil.getTable(columns, rows, columnsclass)

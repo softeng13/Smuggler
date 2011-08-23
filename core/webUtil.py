@@ -40,6 +40,8 @@ def getHeaderRow(columns, columnsclass=[]):
 def getResultRow(columns, css, columnsclass=[]):
     result = "<tr  class=\""+css+"\">"
     for column, columnclass in itertools.izip_longest(columns,columnsclass):
+        if column == None:
+            column = ''
         if (columnclass == None):
             add = "<td>"+str(column)+"</td>"
         else:

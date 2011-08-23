@@ -578,8 +578,15 @@ label.component-error input {
 	display: none;
 }
 
+#new_categories, #new_subcategories, #new_albums {
+	background-color: #EAEAEA;
+	border-width: 2px;
+	border-style: solid;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
 #new_categories p,#new_subcategories p,#new_albums p {
-	margin-top: 20px;
-	margin-bottom: 0px;
+	margin: 5px 5px 5px 5px; 
 	font-weight: bold;
 }

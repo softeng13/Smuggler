@@ -282,6 +282,7 @@ def missingSmugMugCategories(conn):
            " SELECT distinct category"
            " FROM local_image" 
            " WHERE category not in (SELECT category FROM smug_album WHERE category IS NOT NULL)"
+           " ORDER BY category"
           )
     result = execute(conn, sql)
     return result
@@ -293,6 +294,7 @@ def missingSmugMugSubCategories(conn):
            " (SELECT category_id FROM category_log WHERE category = l.category) as new_cat_id"
            " FROM local_image l"
            " WHERE sub_category not in (SELECT sub_category FROM smug_album WHERE sub_category IS NOT NULL)"
+           " ORDER BY l.category, l.sub_category"
           )
     result = execute(conn, sql)
     return result
@@ -307,6 +309,7 @@ def missingSmugMugAlbums(conn):
            " (SELECT sub_id FROM sub_category_log WHERE sub_category = l.sub_category) as new_cat_id"
            "  FROM local_image l"
            "  WHERE album not in (SELECT title FROM smug_album)"
+           " ORDER BY l.category, l.sub_category, l.album"
           )
     result = execute(conn, sql)
     return result
