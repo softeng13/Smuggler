@@ -43,7 +43,7 @@ class SmugMugScan(object):
         if self._process == None or not self._process.is_alive():
             myLogger.info("Starting smugmug scan.")
             messaging.messages.addInfo("SmugMug Scan has been Started.")
-            self._process = multiprocessing.Process(target=_getAllPictureInfo, args=(smugmug, configobj, lock))
+            self._process = multiprocessing.Process(target=_getAllPictureInfo, args=(smugmug, configobj, lock), daemon=True)
             self._process.start()
             thread.start_new_thread(_checkProcess,(self._process,))
         else:
