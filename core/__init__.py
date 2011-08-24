@@ -33,6 +33,8 @@ import messaging
 import pictureReport
 import smugglerWeb
 import smugScan
+import syncUtil
+import webUtil
 
 #the file extensions of pictures we can upload
 EXTENSIONS = [".jpg", ".jpeg", ".jpe",".jfif",".jif", ".png", ".gif"]

@@ -28,7 +28,7 @@ import db
 myLogger = logging.getLogger('dbSchema')
 
 def upgradeSchema(conn):
-    schema = SyncLogSchema()
+    schema = UserSubCategorySchema()
     schema.upgrade(conn)
 
 class BaseSchema():
@@ -158,4 +158,31 @@ class SyncLogSchema(CategorySchema):
             db.execute(conn, "CREATE TABLE image_log (image_id, filename TEXT, album TEXT, category TEXT, sub_category TEXT, scan TIMESTAMP)")
             self.incrementDBVerson(conn)
 
-
+class UserCategorySchema(SyncLogSchema):
+    """
+    """ 
+    def upgrade(self, conn):
+        self._upgrade(db.getDBVersion(conn), conn)
+    
+    def _upgrade(self, version, conn):
+        """
+        """
+        SyncLogSchema._upgrade(self,version, conn)
+        if version < 8:
+            db.execute(conn, "CREATE TABLE user_category (type TEXT, id TEXT, nicename TEXT, name TEXT, PRIMARY KEY (id))")
+            db.execute(conn, "CREATE TABLE user_subcategory (id TEXT, nicename TEXT, name TEXT, PRIMARY KEY (id))")
+            self.incrementDBVerson(conn)
+            
+class UserSubCategorySchema(UserCategorySchema):
+    """
+    """ 
+    def upgrade(self, conn):
+        self._upgrade(db.getDBVersion(conn), conn)
+    
+    def _upgrade(self, version, conn):
+        """
+        """
+        UserCategorySchema._upgrade(self,version, conn)
+        if version < 9:
+            db.execute(conn, "ALTER TABLE user_subcategory ADD category_id TEXT")
+            self.incrementDBVerson(conn)

@@ -126,6 +126,16 @@ def addSmugImage(conn, album_id, last_updated, md5_sum, key, id, filename):
     params = [album_id, last_updated, md5_sum, key, id, filename]
     execute(conn, sql, params)
     
+def addUserCategory(conn, type, id, nicename, name):
+    sql = "INSERT OR REPLACE INTO user_category (type, id, nicename, name) VALUES (?,?,?,?)"
+    params = [type, id, nicename, name]
+    execute(conn, sql, params)
+
+def addUserSubCategory(conn,id, nicename, name, categoryid):
+    sql = "INSERT OR REPLACE INTO user_subcategory (id, nicename, name, category_id) VALUES (?,?,?,?)"
+    params = [id, nicename, name, categoryid]
+    execute(conn, sql, params)
+  
 def findSameFilesWithDifferentName(conn):
     sql = (
            "SELECT DISTINCT li.filename, si.filename, li.path_root, li.file_path, li.rowid  " 
@@ -281,7 +291,7 @@ def missingSmugMugCategories(conn):
     sql = (
            " SELECT distinct category"
            " FROM local_image" 
-           " WHERE category not in (SELECT category FROM smug_album WHERE category IS NOT NULL)"
+           " WHERE category not in (SELECT name FROM user_category)"
            " ORDER BY category"
           )
     result = execute(conn, sql)
@@ -290,10 +300,9 @@ def missingSmugMugCategories(conn):
 def missingSmugMugSubCategories(conn):
     sql = (
            " SELECT DISTINCT sub_category, category,"
-           " (SELECT category_id FROM smug_album WHERE category = l.category) as cat_id,"
-           " (SELECT category_id FROM category_log WHERE category = l.category) as new_cat_id"
+           " (SELECT id FROM user_category WHERE name = l.category) as cat_id"
            " FROM local_image l"
-           " WHERE sub_category not in (SELECT sub_category FROM smug_album WHERE sub_category IS NOT NULL)"
+           " WHERE sub_category not in (SELECT name FROM user_subcategory)"
            " ORDER BY l.category, l.sub_category"
           )
     result = execute(conn, sql)
@@ -302,14 +311,40 @@ def missingSmugMugSubCategories(conn):
 def missingSmugMugAlbums(conn):
     sql = (
            " SELECT distinct album, l.category,"
-           " (SELECT category_id FROM smug_album WHERE category = l.category) as cat_id,"
-           " (SELECT category_id FROM category_log WHERE category = l.category) as new_cat_id,"
+           " (SELECT id FROM user_category WHERE name = l.category) as cat_id,"
            " l.sub_category,"
-           " (SELECT sub_category_id FROM smug_album WHERE category = l.category) as cat_id,"
-           " (SELECT sub_id FROM sub_category_log WHERE sub_category = l.sub_category) as new_cat_id"
+           " (SELECT id FROM user_subcategory WHERE name = l.sub_category) as cat_id"
            "  FROM local_image l"
            "  WHERE album not in (SELECT title FROM smug_album)"
            " ORDER BY l.category, l.sub_category, l.album"
           )
     result = execute(conn, sql)
     return result
+
+
+###############################################################################
+#                                                                             #
+#    Methods to keep track of sync runs.                                      #
+#                                                                             #
+###############################################################################
+
+def insertCategoryLog(conn, category_id, category, scan):
+    params = [category_id, category, scan]    
+    sql = (
+           "INSERT INTO category_log(category_id,category,scan) VALUES (?,?,?)"
+          )
+    execute(conn, sql, params)
+
+def insertSubCategoryLog(conn, id, subcategory, category, scan):
+    params = [id, subcategory, category, scan]    
+    sql = (
+           "INSERT INTO sub_category_log(sub_id,sub_category, category,scan) VALUES (?,?,?,?)"
+          )
+    execute(conn, sql, params)
+
+def insertAlbumLog(conn, id, name, category, subcategory, scan):
+    params = [id, name, category, subcategory, scan]    
+    sql = (
+           "INSERT INTO album_log(album_id, name, category, sub_category, scan) VALUES (?,?,?,?,?)"
+          )
+    execute(conn, sql, params)

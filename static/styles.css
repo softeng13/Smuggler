@@ -285,7 +285,7 @@ li ol, li ul {
 
 #content {
 	float: left;
-	width: 535px;
+	width: 555px;
 	min-height: 100%;
 	padding-top: 10px;
 }
@@ -321,6 +321,7 @@ li ol, li ul {
 }
 
 .sidebar li ul {
+	background-color: #72B92D;
 }
 
 .sidebar li ul li {

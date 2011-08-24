@@ -39,7 +39,7 @@ import syncUtil
 
 myLogger = logging.getLogger('smugglerWeb')
 
-smugmug = smugpy.SmugMug(api_key=core.API_KEY, oauth_secret=core.OAUTH_SECRET, app_name="Smuggler")
+smugmug = smugpy.SmugMug(api_key=core.API_KEY, oauth_secret=core.OAUTH_SECRET, api_version="1.3.0", app_name="Smuggler")
 
 working_dir = os.getcwd()
 default_log = ''.join([working_dir, '/log']) 
@@ -54,6 +54,7 @@ urls = (
         '/json/rootdir', 'rootdir',
         '/json/logdir', 'logdir',
         '/json/datadir', 'datadir',
+        '/json/sync', 'sync',
         
         '/examples', 'examples',
         '/setup', 'setup',
@@ -87,8 +88,8 @@ render_plain = web.template.render('template/')
 app = web.application(urls, globals())
 
 def run():
-    #web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0",8080))
-    app.run()
+    web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0",8080))
+    #app.run()
 
 ###############################################################################
 #                                                                             #
@@ -204,9 +205,15 @@ class config:
                 return self._GET(form, True, '')
     
     def _GET(self, form, authBad, picRoot):
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
         if smugmug.oauth_token == None:
             smugmug.auth_getRequestToken()
-        url = smugmug.authorize("Full", "Modify")
+            url = smugmug.authorize("Full", "Modify")
+        else:
+            url = None
         return render.config(form, url, authBad, picRoot)
 
 class reports:
@@ -356,6 +363,20 @@ class smugmugscan:
         smugScan.smugScan.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan SmugMug."]
+        return json.dumps(messages)
+    
+class sync:
+    """
+    """
+    def GET(self):
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        syncUtil.smugmugsync.start(smugmug, core.configobj, lock)
+        web.header('Content-Type', 'application/json')
+        messages =["Passed along request to Sync SmugMug."]
         return json.dumps(messages)
 
 class rootdir:

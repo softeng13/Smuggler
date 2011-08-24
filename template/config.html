@@ -62,7 +62,10 @@ $var pagescript: /static/script-config.js
 					$else:
 						<label class="nocheck clearfix">
 					<span class="component-title">Authenticate Smuggler:</span>
-					<a href="$:url" target="_blank">Authenticate</a>
+					$if url:
+						<a href="$:url" target="_blank">Authenticate</a>
+					$else:
+						<span>Smuggler Already Authenticated</span>
 				</label>
 			</div>
 			<div class="save">

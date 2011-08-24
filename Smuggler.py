@@ -1,42 +1,16 @@
-'''
-Copyright (c) 2011 Jacob K. Schoen (jacob.schoen@gmail.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all 
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
-SOFTWARE.
-'''
 import os
 import errno
-import getopt
 import logging.handlers
 import sys
-import time
 
 import core
-from core import fileScan
-from core import smugScan
-from core import dbSchema
-from core import fileUtil
-from core import pictureReport
+from core import db
+from core import smugglerWeb
 
 myLogger = logging.getLogger('Smuggler')
 
 
-def logSetup(debug, console):
+def logSetup(debug, console, configobj):
     """
     Setting up the logging the way we want it. Basically we will log to both
     the console and to a log file. The log files will max out at 10 megabytes
@@ -46,7 +20,7 @@ def logSetup(debug, console):
     
     #make sure there is a log directory to write to
     try:
-        os.makedirs(core.LOG_DIR)
+        os.makedirs(configobj.log_dir)
     except OSError, e:
         if e.errno != errno.EEXIST:
             raise
@@ -60,10 +34,10 @@ def logSetup(debug, console):
     else:
         logger.setLevel(logging.WARNING) 
     
-    formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    formatter = logging.Formatter('%(processName)s %(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     
     #File Handler Setup to create rotate log files at 10 megabytes and only keep 5
-    handler = logging.handlers.RotatingFileHandler(core.LOG_DIR+'/Smuggler.log', maxBytes=10*1024*1024, backupCount=5)
+    handler = logging.handlers.RotatingFileHandler(configobj.log_dir+'/Smuggler.log', maxBytes=10*1024*1024, backupCount=5)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     
@@ -75,142 +49,30 @@ def logSetup(debug, console):
         console.setFormatter(formatter)
         logging.getLogger('').addHandler(console)
 
-def usage():
-    help = (
-            "usage: python Smuggler.py [--help] [--forcescan] [--upload] [--download]        \n"
-            "       [--logdebug] [--consolelog] [--config=<file path>]                       \n\n"
-            "If Smuggler is ran with out any options, all it will do is scan for changes of  \n"
-            "local and SmugMug files and generate a report detailing what it found. The      \n"
-            "report is helpful to determine any sync issues you may have if you perform the  \n"
-            "upload and\or download functions. It is important to look over them to see if   \n"
-            "there are any things you need to fix. If there is, after fixing them rerun this \n"
-            "with the [--forcescan] option to rescan everything to double check it before you\n"
-            "go any farther.                                                                 \n\n"
-            "Options and arguments explained:                                                \n"
-            "--help       : print this help message and exit                                 \n"
-            "--forcescan  : delete existing database and start completly fresh. the old      \n"
-            "               database will be renamed smuggler.db.old in the data dir. If     \n"
-            "               there is already a file with that name, that file will be deleted\n"
-            "--upload     : upload all images that are not currently on SmugMug              \n"
-            "               NOTE: NOT IMPLEMENTED YET SO WILL JUST EXIT                      \n"
-            "--download   : download all images that are on SmugMug but not found locally    \n"
-            "               NOTE: NOT IMPLEMENTED YET SO WILL JUST EXIT                      \n"
-            "--logdebug   : will set the logging level to debug. This will slow things down  \n"
-            "               so it should not always be used, but is helpful if you are having\n"
-            "               a problem                                                        \n"
-            "--consolelog : will print logs to the console while running.                    \n"
-            "--config     : passes in the file path the configuration file you want to use.  \n"
-            "               Helpful if you want to run two instances of Smuggler, with       \n"
-            "               different path roots for the images.                             \n\n"
-            "If you run into a issue or bug or question check out the issues on github at    \n"
-            "https://github.com/jkschoen/Smuggler/. One day maybe there will be something on \n"
-            "the wiki for the project, but until then just look at open/closed issues and if \n"
-            "you don't see your problem open up a new one.                                   \n"
-           )
-    print help 
-
-def renameDb():
-    existingFilename = core.DATA_DIR+'/smuggler.db'
-    newFilename = existingFilename + '.old'
-    try:
-        os.remove(newFilename)
-    except OSError:
-        pass
-    os.rename(existingFilename, newFilename)  
-
 def main():
-    #Default values for parameters
-    deleteDb = False
-    upload = False
-    download = False
-    logdebug = False
-    consolelog = False
-    filerename = False
-    justReport = False
-    #process options
+    #load the config file if it is there
+    print sys.version
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hfudlc", ['help','forcescan', 'upload', 'download', 'logdebug', 'consolelog', 'config=', 'filerename', 'report'])
-    except getopt.GetoptError, err:
-        out = [str(err), "\n\n"]
-        print ''.join(out)
-        usage()
-        sys.exit(2)
-        
-    for option, value in opts:
-        if option in ("-h", "--help"):
-            usage()
-            #sys.exit()
-        elif option in ("-f", "--forcescan"):
-            deleteDb = True
-        elif option in ("-u", "--upload"):
-            upload = True
-            assert False, "Come on man, I just started writing this thing. Be patient."
-        elif option in ("-d", "--download"):
-            download = True
-            assert False, "Come on man, I have not even implemented upload yet. Be patient."
-        elif option in ("-l", "--logdebug"):
-            logdebug = True
-        elif option in ("-c", "--consolelog"):
-            consolelog = True
-        elif option == "--config":
-            core.CONFIG_FILE = value
-        elif option == "--filerename":
-            filerename = True   
-        elif option == "--report":
-            justReport = True 
-        else:
-            assert False, "Unhandled Opton. Go create an issue on github and tell me a joke while you are there."
-    
-    #load up configuration file
-    try:
-        configFile = open(core.CONFIG_FILE)
+        configFile = open("config.ini")
         configFile.close()
+        #initialize db, only want to do this if the config is there already
+        myLogger.info("Starting Smuggler, watch your back.")
+        myLogger.debug("Configuration File Processed and Logging Initialized.")
+        myLogger.info("Picture Root => "+core.configobj.picture_root)
+        myLogger.info("Log Dir => "+core.configobj.log_dir)
+        myLogger.info("Data Dir => "+core.configobj.data_dir)
+        
+        db.initDb(core.configobj)
+        myLogger.info("Database started.")
     except IOError:
-        pictureRoot = raw_input("Please enter the path to the folder with your pictures: ")
-        core.PICTURE_ROOT = pictureRoot
-        core.saveConfig()
-    core.loadConfig()
-    
-    #initialize logging
-    logSetup(logdebug, consolelog)
-    
-    #initialize the database
-    if deleteDb:
-        renameDb() #go delete the file, it is easier that way, well rename it anyway
-    myLogger.info("Starting Smuggler, watch your back.")
-    myLogger.debug("Configuration File Processed and Logging Initialized.")
-    dbSchema.upgradeSchema()
-    myLogger.info("Database started.")
-    
-    #check/initialize the oauth connection information
-    core.checkOAuthConnection()
-
-    #check if they want us to rename files, in order for this to run, Smuggler
-    #needs to have been run once before, meaning the user has seen the report
-    #and it is safe to assume they understand what it is changing.  
-    if filerename and not core.FIRST_RUN:
-        fileUtil.fileRenamer()
-        
-    
-    if not justReport:
-        myLogger.info("Starting to get all the picture info from SmugMug")
-        smugScan.getAllPictureInfo()
-        myLogger.debug("Finished getting all the picture info from SmugMug")
-        
-        myLogger.info("Starting to scan directories to locate any new pictures")
-        fileScan.findPictures()
-        myLogger.debug("Finished scanning all files in the directory")
-    
-    #Check for files that are the some local and on SmugMug with different names
-    
-    pictureReport.generateReports()
+        pass #this just means a config file was not found, will happen on first run.
    
-    
-    #last thing to do before closing up shop is save configuration information
-    myLogger.debug("Saving configuration file.")
-    #core.saveConfig()
-    print "\n"
-    
+    #initialize logging for the application
+    logSetup(True, True, core.configobj)
+    #initialize logging for the application
+    myLogger.info("Starting Smuggler, watch your back.")
+    #start web server
+    smugglerWeb.run()
+
 if __name__ == '__main__':
     main()
-    

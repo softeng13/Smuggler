@@ -46,7 +46,7 @@ class LocalScan(object):
         lock.acquire()
         if self._process == None or not self._process.is_alive():
             messaging.messages.addInfo("Local Scan has been Started.")
-            self._process = multiprocessing.Process(target=_findPictures, args=(configobj,lock), daemon=True)
+            self._process = multiprocessing.Process(target=_findPictures, args=(configobj,lock))
             self._process.start()
             myLogger.info("Local File Scan has been started. isAlive: %s", self._process.is_alive())
             thread.start_new_thread(_checkProcess,(self._process,))

@@ -24,15 +24,12 @@ import logging
 import datetime
 import multiprocessing
 import thread
-import threading
-import time
 
 import db
 import messaging
 
 myLogger = logging.getLogger('smugScan')
 
-lock = threading.Lock()
 
 class SmugMugScan(object):
     def __init__(self):
@@ -43,7 +40,7 @@ class SmugMugScan(object):
         if self._process == None or not self._process.is_alive():
             myLogger.info("Starting smugmug scan.")
             messaging.messages.addInfo("SmugMug Scan has been Started.")
-            self._process = multiprocessing.Process(target=_getAllPictureInfo, args=(smugmug, configobj, lock), daemon=True)
+            self._process = multiprocessing.Process(target=_getAllPictureInfo, args=(smugmug, configobj, lock))
             self._process.start()
             thread.start_new_thread(_checkProcess,(self._process,))
         else:
@@ -97,13 +94,33 @@ def _getPictures(album, conn, smugmug, lock):
         lock.acquire()
         db.addSmugImage(conn,albumId, datetime.datetime.strptime(picture["LastUpdated"],'%Y-%m-%d %H:%M:%S'), picture["MD5Sum"], picture["Key"], picture["id"], picture["FileName"])
         lock.release() 
-    
+
+def _getUserCategories(conn, smugmug, lock):
+    result = smugmug.categories_get()
+    categories = result["Categories"]
+    ids = []
+    for category in categories:
+        ids.append(category["id"])
+        lock.acquire()
+        db.addUserCategory(conn,category["Type"],category["id"],category["NiceName"],category["Name"])
+        lock.release()  
+    return ids  
+
+def _getUserSubCategories(conn, smugmug, lock, ids):
+    for categoryid in ids:
+        result = smugmug.subcategories_get(CategoryID=categoryid)
+        subcategories = result["SubCategories"]
+        for subcategory in subcategories:
+            lock.acquire()
+            db.addUserSubCategory(conn,subcategory["id"],subcategory["NiceName"],subcategory["Name"], categoryid)
+            lock.release() 
 
 def _emptySmugMugTables(conn, lock):
     lock.acquire()
     db.execute(conn,"DELETE FROM smug_album")
     db.execute(conn,"DELETE FROM smug_image")
     lock.release()
+    
 
 def _getAllPictureInfo(smugmug, configobj, lock):
     conn = db.getConn(configobj)
@@ -118,5 +135,9 @@ def _getAllPictureInfo(smugmug, configobj, lock):
         #and the pictures in each album
         myLogger.debug("geting picture info for album '%s'", album["Title"])
         _getPictures(album, conn, smugmug, lock)
+    
+    #get categories
+    ids = _getUserCategories(conn, smugmug, lock)
+    _getUserSubCategories(conn, smugmug, lock, ids)
     conn.close()
     myLogger.info('Finished Scanning SmugMug')

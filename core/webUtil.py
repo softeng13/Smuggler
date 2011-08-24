@@ -50,11 +50,8 @@ def getResultRow(columns, css, columnsclass=[]):
     result = result + "</tr>"
     return result
 
-def getTable(columns, rows, columnsclass=[], intro=None):
-    table = ""
-    if intro <> None:
-        table = "<p>"+intro+"</p>"
-    table = table + "<table>"
+def getTable(columns, rows, columnsclass=[]):
+    table = "<table>"
     table = table + getHeaderRow(columns, columnsclass) + "<tbody>"
     css = 'odd'
     for row in rows:
