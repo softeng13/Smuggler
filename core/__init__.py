@@ -31,6 +31,7 @@ import fileScan
 import fileUtil
 import messaging
 import pictureReport
+import processRunner
 import smugglerWeb
 import smugScan
 import syncUtil
@@ -39,9 +40,16 @@ import webUtil
 #the file extensions of pictures we can upload
 EXTENSIONS = [".jpg", ".jpeg", ".jpe",".jfif",".jif", ".png", ".gif"]
 
-#default config object
+#default configuration object
 configobj = config.Config()
 
+smugmugscan = processRunner.Runner(smugScan.getAllPictureInfo, 'SmugMug Scan has been Started.', 'Finished scanning SmugMug', 'SmugMug Scan had already been Started.')
+smugmuglocalscan = processRunner.Runner(fileScan.findPictures, 'Local File Scan has been Started.', 'Finished Scanning Local Files.', 'Local Scan had already been Started.')
 
-
-       
+smugmugsync = processRunner.Runner(syncUtil.sync, 'SmugMug Sync has been Started.', 'Finished Sync with SmugMug', 'SmugMug Sync had already been Started.')
+smugmugcontainers = processRunner.Runner(syncUtil.createMissingContainers, 'Staring to create missing Categories, SubCategories, and Albums on SmugMug.', 'Finished Creating Categories, SubCategories, and Albums on SmugMug.', 'Process to create Containers was already running.')
+smugmugcategories = processRunner.Runner(syncUtil.createMissingCategories, 'Staring to create missing Categories on SmugMug.', 'Finished Creating Categories on SmugMug.', 'Process to create Categories was already running.')
+smugmugsubcategories = processRunner.Runner(syncUtil.createMissingSubCategories, 'Staring to create missing SubCategories on SmugMug.', 'Finished Creating SubCategories on SmugMug.', 'Process to create SubCategories was already running.')
+smugmugalbums = processRunner.Runner(syncUtil.createMissingAlbums, 'Staring to create missing Albums on SmugMug.', 'Finished Creating Albums on SmugMug.', 'Process to create Albums was already running.')
+smugmugdownload = processRunner.Runner(syncUtil.download, 'Staring to download missing images from SmugMug.', 'Finished downloading missing images from SmugMug.', 'Process to download images is already running.')
+ 

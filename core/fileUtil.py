@@ -21,11 +21,22 @@ SOFTWARE.
 '''
 
 import logging
+import hashlib
 import os
 
 import db
 
 myLogger = logging.getLogger('fileUtil')
+
+def md5(file):
+    f = open(file,'rb')
+    m = hashlib.md5()
+    while True:
+        data = f.read(10240)
+        if len(data) == 0:
+            break
+        m.update(data)
+    return m.hexdigest()
 
 def fileRenamer(conn):
     """

@@ -20,15 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 from datetime import datetime
-import hashlib
 import logging
-import multiprocessing
 import os
-import thread
 import urllib2
 
 import db
-import messaging
+import fileUtil
 import webUtil
 
 myLogger = logging.getLogger('syncUtil')
@@ -66,129 +63,10 @@ def missingSmugMugAlbumsHTML(conn):
         return webUtil.getTable(columns, rows, columnsclass)
 
 
-###############################################################################
-#                                                                             #
-#    Below actually do the work.                                              #
-#                                                                             #
-###############################################################################
-
-class SmugMugSync(object):
-    def __init__(self):
-        self._process = None
-    
-    def start(self, smugmug, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            myLogger.info("Starting smugmug sync.")
-            messaging.messages.addInfo("SmugMug Sync has been Started.")
-            self._process = multiprocessing.Process(target=sync, args=(configobj, smugmug, lock))
-            self._process.start()
-            thread.start_new_thread(_checkProcess,(self._process,'Finished Sync with SmugMug'))
-        else:
-            myLogger.info("SmugMug sync was already started.")
-            messaging.messages.addInfo("SmugMug Sync had already been Started.") 
-        lock.release()
-
-class SmugMugContainers(object):
-    def __init__(self):
-        self._process = None
-    
-    def start(self, smugmug, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            myLogger.info("Starting smugmug sync.")
-            messaging.messages.addInfo("Staring to create missing Categories, SubCategories, and Albums on SmugMug.")
-            self._process = multiprocessing.Process(target=createMissingContainers, args=(configobj, smugmug, lock))
-            self._process.start()
-            thread.start_new_thread(_checkProcess,(self._process,'Finished Creating Categories, SubCategories, and Albums on SmugMug.'))
-        else:
-            myLogger.info("Process to create Containers was already running.")
-            messaging.messages.addInfo("Process to create Containers was already running.") 
-        lock.release()
-
-class SmugMugCategories(object):
-    def __init__(self):
-        self._process = None
-    
-    def start(self, smugmug, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            myLogger.info("Starting smugmug sync.")
-            messaging.messages.addInfo("Staring to create missing Categories on SmugMug.")
-            self._process = multiprocessing.Process(target=createMissingCategories, args=(configobj, smugmug, lock))
-            self._process.start()
-            thread.start_new_thread(_checkProcess,(self._process,'Finished Creating Categories on SmugMug.'))
-        else:
-            myLogger.info("Process to create Categories was already running.")
-            messaging.messages.addInfo("Process to create Categories was already running.") 
-        lock.release()
-
-class SmugMugSubCategories(object):
-    def __init__(self):
-        self._process = None
-    
-    def start(self, smugmug, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            myLogger.info("Starting smugmug sync.")
-            messaging.messages.addInfo("Staring to create missing SubCategories on SmugMug.")
-            self._process = multiprocessing.Process(target=createMissingSubCategories, args=(configobj, smugmug, lock))
-            self._process.start()
-            thread.start_new_thread(_checkProcess,(self._process,'Finished Creating SubCategories on SmugMug.'))
-        else:
-            myLogger.info("Process to create SubCategories was already running.")
-            messaging.messages.addInfo("Process to create SubCategories was already running.") 
-        lock.release()
-
-class SmugMugAlbums(object):
-    def __init__(self):
-        self._process = None
-    
-    def start(self, smugmug, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            myLogger.info("Starting smugmug sync.")
-            messaging.messages.addInfo("Staring to create missing Albums on SmugMug.")
-            self._process = multiprocessing.Process(target=createMissingAlbums, args=(configobj, smugmug, lock))
-            self._process.start()
-            thread.start_new_thread(_checkProcess,(self._process,'Finished Creating Albums on SmugMug.'))
-        else:
-            myLogger.info("Process to create albums was Already running.")
-            messaging.messages.addInfo("Process to create Albums was already running.") 
-        lock.release()
-
-class SmugMugDownload(object):
-    def __init__(self):
-        self._process = None
-    
-    def start(self, smugmug, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            myLogger.info("Starting smugmug sync.")
-            messaging.messages.addInfo("Staring to download missing images from SmugMug.")
-            self._process = multiprocessing.Process(target=download, args=(configobj, smugmug, lock))
-            self._process.start()
-            thread.start_new_thread(_checkProcess,(self._process,'Finished downloading missing images from SmugMug.'))
-        else:
-            myLogger.info("Process to download images is already running.")
-            messaging.messages.addInfo("Process to download images is already running.") 
-        lock.release()
-
-smugmugsync = SmugMugSync()
-smugmugcontainers = SmugMugContainers()
-smugmugcategories = SmugMugCategories()
-smugmugsubcategories = SmugMugSubCategories()
-smugmugalbums = SmugMugAlbums()
-smugmugdownload = SmugMugDownload()
-   
-def _checkProcess(process, message):
-    process.join()
-    messaging.messages.addInfo(message)
-
         
 ###############################################################################
 #                                                                             #
-#    Methods used to kick off processes                                       #
+#                                        #
 #                                                                             #
 ###############################################################################
 
@@ -266,7 +144,7 @@ def _createMissingSubCategories(conn,smugmug, sync, lock):
 def _createMissingAlbums(conn,smugmug, sync, lock):
     albums = db.missingSmugMugAlbums(conn)
     for album in albums:
-        if album[2] == None: #no category or subcaategory
+        if album[2] == None: #no category or subcategory
             result = smugmug.albums_create(Title=album[0])
         elif album[4] == None: # category but no subcategory
             result = smugmug.albums_create(Title=album[0], CategoryID=album[2])
@@ -308,20 +186,10 @@ def _download(conn, configobj, smugmug, sync, lock):
         output.close()
 
         lock.acquire()
-        db.addLocalImage(conn, subcategory, category, album, sync, _md5(filepath), configobj.picture_root, filename, format(filepath.lstrip(configobj.picture_root)), sync)
+        db.addLocalImage(conn, subcategory, category, album, sync, fileUtil.md5(filepath), configobj.picture_root, filename, format(filepath.lstrip(configobj.picture_root)), sync)
         lock.release() 
-    log.debug("finsihed downloading images")
+    log.debug("finished downloading images")
     
-
-def _md5(file):
-    f = open(file,'rb')
-    m = hashlib.md5()
-    while True:
-        data = f.read(10240)
-        if len(data) == 0:
-            break
-        m.update(data)
-    return m.hexdigest()
 
 def _buildfilePath(root, category, subcategory, album, filename):
     path = root

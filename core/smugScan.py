@@ -22,44 +22,34 @@ SOFTWARE.
 
 import logging
 import datetime
-import multiprocessing
 import os
-import thread
 
 import db
-import messaging
 
 myLogger = logging.getLogger('smugScan')
 
-
-class SmugMugScan(object):
-    def __init__(self):
-        self._process = None
+def getAllPictureInfo(smugmug, configobj, lock):
+    print('parent process:', os.getppid())
+    print('process id:', os.getpid())
+    conn = db.getConn(configobj)
+    #start fresh on this
+    myLogger.debug("Emptying smugmug tables.")
+    _emptySmugMugTables(conn, lock)
     
-    def start(self, smugmug, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            myLogger.info("Starting smugmug scan.")
-            messaging.messages.addInfo("SmugMug Scan has been Started.")
-            self._process = multiprocessing.Process(target=_getAllPictureInfo, args=(smugmug, configobj, lock))
-            self._process.start()
-            thread.start_new_thread(_checkProcess,(self._process,))
-        else:
-            myLogger.info("Smugmug scan was already started.")
-            messaging.messages.addInfo("SmugMug Scan had already been Started.") 
-        lock.release()
+    #now get the albums 
+    myLogger.debug("Getting album info from smugmug.")
+    albums = _getAlbums(conn, smugmug, lock)
+    for album in albums["Albums"]:
+        #and the pictures in each album
+        myLogger.debug("geting picture info for album '%s'", album["Title"])
+        _getPictures(album, conn, smugmug, lock)
     
-    def finished(self):
-        return self._process == None or not self._process.is_alive()
+    #get categories
+    ids = _getUserCategories(conn, smugmug, lock)
+    _getUserSubCategories(conn, smugmug, lock, ids)
+    conn.close()
+    myLogger.info('Finished Scanning SmugMug')
 
-
-smugScan = SmugMugScan()
-
-def _checkProcess(process):
-    process.join()
-    messaging.messages.addInfo('Finished Scanning SmugMug')
-        
-    
 def _getAlbums(conn, smugmug, lock):
     albums = smugmug.albums_get(Extras="LastUpdated")
     
@@ -121,26 +111,3 @@ def _emptySmugMugTables(conn, lock):
     db.execute(conn,"DELETE FROM smug_album")
     db.execute(conn,"DELETE FROM smug_image")
     lock.release()
-    
-
-def _getAllPictureInfo(smugmug, configobj, lock):
-    print('parent process:', os.getppid())
-    print('process id:', os.getpid())
-    conn = db.getConn(configobj)
-    #start fresh on this
-    myLogger.debug("Emptying smugmug tables.")
-    _emptySmugMugTables(conn, lock)
-    
-    #now get the albums 
-    myLogger.debug("Getting album info from smugmug.")
-    albums = _getAlbums(conn, smugmug, lock)
-    for album in albums["Albums"]:
-        #and the pictures in each album
-        myLogger.debug("geting picture info for album '%s'", album["Title"])
-        _getPictures(album, conn, smugmug, lock)
-    
-    #get categories
-    ids = _getUserCategories(conn, smugmug, lock)
-    _getUserSubCategories(conn, smugmug, lock, ids)
-    conn.close()
-    myLogger.info('Finished Scanning SmugMug')

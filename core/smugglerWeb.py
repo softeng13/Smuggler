@@ -29,11 +29,9 @@ from web import form
 
 import core
 import db
-import fileScan
 from lib import smugpy
 import messaging
 import pictureReport
-import smugScan
 import syncUtil
 
 
@@ -320,7 +318,7 @@ class createCategories:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        syncUtil.smugmugcategories.start(smugmug, core.configobj, lock)
+        core.smugmugcategories.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         return json.dumps(messages)
     
@@ -332,7 +330,7 @@ class createSubCategories:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        syncUtil.smugmugsubcategories.start(smugmug, core.configobj, lock)
+        core.smugmugsubcategories.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         return json.dumps(messages)
     
@@ -344,7 +342,7 @@ class createAlbums:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        syncUtil.smugmugalbums.start(smugmug, core.configobj, lock)
+        core.smugmugalbums.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         return json.dumps(messages)
     
@@ -356,7 +354,7 @@ class createContainers:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        syncUtil.smugmugcontainers.start(smugmug, core.configobj, lock)
+        core.smugmugcontainers.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         return json.dumps(messages)
         
@@ -373,7 +371,7 @@ class download:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        syncUtil.smugmugdownload.start(smugmug, core.configobj, lock)
+        core.smugmugdownload.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         return json.dumps(messages)
     
@@ -386,7 +384,7 @@ class sync:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        syncUtil.smugmugsync.start(smugmug, core.configobj, lock)
+        core.smugmugsync.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Sync SmugMug."]
         return json.dumps(messages)
@@ -422,8 +420,8 @@ class fullscan:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        fileScan.localScan.start(core.configobj, lock)
-        smugScan.smugScan.start(smugmug, core.configobj, lock)
+        core.smugmuglocalscan.start(None, core.configobj, lock)
+        core.smugmugscan.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan everything."]
         return json.dumps(messages)
@@ -435,7 +433,7 @@ class localscan:
     """
     def GET(self):
         lock = multiprocessing.Lock()
-        fileScan.localScan.start(core.configobj, lock)
+        core.smugmuglocalscan.start(None, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan Locally."]
         return json.dumps(messages)
@@ -451,7 +449,7 @@ class smugmugscan:
         token = result[0]
         secret = result[1]
         smugmug.set_oauth_token(token, secret)
-        smugScan.smugScan.start(smugmug, core.configobj, lock)
+        core.smugmugscan.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan SmugMug."]
         return json.dumps(messages)

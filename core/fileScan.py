@@ -21,59 +21,16 @@ SOFTWARE.
 '''
 
 import datetime
-import hashlib
 import logging
-import multiprocessing
-import thread
-import threading
 import os
-
 
 import core
 import db
-import messaging
+import fileUtil
 
 myLogger = logging.getLogger('fileScan')
 
-lock = threading.Lock()
-
-class LocalScan(object):
-    def __init__(self):
-        self._process = None
-    
-    def start(self, configobj, lock):
-        lock.acquire()
-        if self._process == None or not self._process.is_alive():
-            messaging.messages.addInfo("Local Scan has been Started.")
-            self._process = multiprocessing.Process(target=_findPictures, args=(configobj,lock))
-            self._process.start()
-            myLogger.info("Local File Scan has been started. isAlive: %s", self._process.is_alive())
-            thread.start_new_thread(_checkProcess,(self._process,))
-        else:
-            messaging.messages.addInfo("Local Scan had already been Started.") 
-        lock.release()
-    
-    def finished(self):
-        return self._process == None or not self._process.is_alive()
-
-
-localScan = LocalScan()
-
-def _checkProcess(process):
-    process.join()
-    messaging.messages.addInfo('Finished Scanning Local Files.')
-
-def _md5(file):
-    f = open(file,'rb')
-    m = hashlib.md5()
-    while True:
-        data = f.read(10240)
-        if len(data) == 0:
-            break
-        m.update(data)
-    return m.hexdigest()
-
-def _findPictures(configobj, lock):
+def findPictures(configobj, lock):
     print('parent process:', os.getppid())
     print('process id:', os.getpid())
     conn = db.getConn(configobj)
@@ -93,7 +50,7 @@ def _findPictures(configobj, lock):
 def _processFoundFile(conn, picture_root, pictureFile, timestamp, lock):
     myLogger.debug("_processFoundFile(%s,%s)", picture_root, pictureFile)
     last_updated = datetime.datetime.fromtimestamp(os.path.getmtime(pictureFile))
-    md5_sum = _md5(pictureFile)
+    md5_sum = fileUtil.md5(pictureFile)
     pictureFile = format(pictureFile.lstrip(picture_root))
     
     path_root = picture_root
@@ -110,7 +67,6 @@ def _processFoundFile(conn, picture_root, pictureFile, timestamp, lock):
     db.addLocalImage(conn, sub_category, category, album, last_updated, md5_sum, path_root, file_name, pictureFile, timestamp)
     lock.release() 
     myLogger.debug("_processFoundFile(%s,%s) completed", picture_root, pictureFile)
-
 
 def _cleanup(conn, lock):
     """
