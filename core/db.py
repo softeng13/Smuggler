@@ -321,6 +321,15 @@ def missingSmugMugAlbums(conn):
     result = execute(conn, sql)
     return result
 
+def imagesToDownload(conn):
+    sql = (
+           " SELECT sa.category, sa.sub_category, sa.title, si.filename, si.id, si.key"
+           " FROM smug_album sa "
+           " INNER JOIN smug_image si ON si.album_id = sa.id "
+           " WHERE si.md5_sum NOT IN (SELECT md5_sum FROM local_image WHERE album = sa.title)"
+          )
+    result = execute(conn, sql)
+    return result
 
 ###############################################################################
 #                                                                             #

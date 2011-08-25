@@ -28,7 +28,7 @@ import db
 myLogger = logging.getLogger('dbSchema')
 
 def upgradeSchema(conn):
-    schema = UserSubCategorySchema()
+    schema = AddIndexesSchema()
     schema.upgrade(conn)
 
 class BaseSchema():
@@ -185,4 +185,22 @@ class UserSubCategorySchema(UserCategorySchema):
         UserCategorySchema._upgrade(self,version, conn)
         if version < 9:
             db.execute(conn, "ALTER TABLE user_subcategory ADD category_id TEXT")
+            self.incrementDBVerson(conn)
+            
+class AddIndexesSchema(UserSubCategorySchema):
+    """
+    """ 
+    def upgrade(self, conn):
+        self._upgrade(db.getDBVersion(conn), conn)
+    
+    def _upgrade(self, version, conn):
+        """
+        """
+        UserSubCategorySchema._upgrade(self,version, conn)
+        if version < 10:
+            db.execute(conn, "create index si_album_id_index on smug_image (album_id)")
+            db.execute(conn, "create index si_md5_index on smug_image (md5_sum)")
+            db.execute(conn, "create index li_album_index on local_image (album)")
+            db.execute(conn, "create index li_md5_index on local_image (md5_sum)")
+            db.execute(conn, "create index sa_album_index on smug_album (title)")
             self.incrementDBVerson(conn)

@@ -23,6 +23,7 @@ SOFTWARE.
 import logging
 import datetime
 import multiprocessing
+import os
 import thread
 
 import db
@@ -123,6 +124,8 @@ def _emptySmugMugTables(conn, lock):
     
 
 def _getAllPictureInfo(smugmug, configobj, lock):
+    print('parent process:', os.getppid())
+    print('process id:', os.getpid())
     conn = db.getConn(configobj)
     #start fresh on this
     myLogger.debug("Emptying smugmug tables.")

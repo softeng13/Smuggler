@@ -1,9 +1,76 @@
 $(document).ready(function(){
 	
+	$("#fullsync").click(function(e) {
+		e.preventDefault();
+	    
+	    $.getJSON('/json/sync', function(data) {
+	    	$.each(data, function() {
+	    		  $.sticky(this);
+	    	});
+
+	    });
+	});
+
+	$("#categories").click(function(e) {
+		e.preventDefault();
+	    
+	    $.getJSON('/json/createCategories', function(data) {
+	    	$.each(data, function() {
+	    		  $.sticky(this);
+	    	});
+
+	    });
+	});
+
+	$("#subcategories").click(function(e) {
+		e.preventDefault();
+	    
+	    $.getJSON('/json/createSubCategories', function(data) {
+	    	$.each(data, function() {
+	    		  $.sticky(this);
+	    	});
+
+	    });
+	});
+
+	$("#albums").click(function(e) {
+		e.preventDefault();
+	    
+	    $.getJSON('/json/createAlbums', function(data) {
+	    	$.each(data, function() {
+	    		  $.sticky(this);
+	    	});
+
+	    });
+	});
+
+	$("#upload").click(function(e) {
+		e.preventDefault();
+	    
+	    $.getJSON('/json/upload', function(data) {
+	    	$.each(data, function() {
+	    		  $.sticky(this);
+	    	});
+
+	    });
+	});
+
+	$("#download").click(function(e) {
+		e.preventDefault();
+	    
+	    $.getJSON('/json/download', function(data) {
+	    	$.each(data, function() {
+	    		  $.sticky(this);
+	    	});
+
+	    });
+	});
+
+	
 	$("#fullscan").click(function(e) {
 		e.preventDefault();
 	    
-	    $.getJSON('json/fullscan', function(data) {
+	    $.getJSON('/json/fullscan', function(data) {
 	    	$.each(data, function() {
 	    		  $.sticky(this);
 	    	});
@@ -14,7 +81,7 @@ $(document).ready(function(){
 	$("#localscan").click(function(e) {
 		e.preventDefault();
 	    
-	    $.getJSON('json/localscan', function(data) {
+	    $.getJSON('/json/localscan', function(data) {
 	    	$.each(data, function() {
 	    		  $.sticky(this);
 	    	});
@@ -35,7 +102,7 @@ $(document).ready(function(){
 	
 	//loops to check for messages
 	setInterval(function(){
-		$.getJSON('json/notify', function(data) {
+		$.getJSON('/json/notify', function(data) {
 	    	$.each(data, function() {
 	    		$.each(this, function(k, v) {
 	    			if (k == 'message')

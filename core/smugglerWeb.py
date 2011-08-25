@@ -55,6 +55,12 @@ urls = (
         '/json/logdir', 'logdir',
         '/json/datadir', 'datadir',
         '/json/sync', 'sync',
+        '/json/upload', 'upload',
+        '/json/download', 'download',
+        '/json/createCategories', 'createCategories',
+        '/json/createSubCategories', 'createSubCategories',
+        '/json/createAlbums', 'createAlbums',
+        '/json/createContainers', 'createContainers',
         
         '/examples', 'examples',
         '/setup', 'setup',
@@ -216,6 +222,12 @@ class config:
             url = None
         return render.config(form, url, authBad, picRoot)
 
+###############################################################################
+#                                                                             #
+#    Below are all the classes for the report screens.                        #
+#                                                                             #
+###############################################################################
+
 class reports:
     def GET(self):
         return render.reports()
@@ -299,6 +311,85 @@ class newSubCategories:
 class newAlbums: 
     def GET(self):
         return syncUtil.missingSmugMugAlbumsHTML(db.getConn(core.configobj)) 
+
+class createCategories: 
+    def GET(self):
+        messages =["Passed along request to create categories."]
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        syncUtil.smugmugcategories.start(smugmug, core.configobj, lock)
+        web.header('Content-Type', 'application/json')
+        return json.dumps(messages)
+    
+class createSubCategories: 
+    def GET(self):
+        messages =["Passed along request to create subcategories."]
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        syncUtil.smugmugsubcategories.start(smugmug, core.configobj, lock)
+        web.header('Content-Type', 'application/json')
+        return json.dumps(messages)
+    
+class createAlbums: 
+    def GET(self):
+        messages =["Passed along request to create albums."]
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        syncUtil.smugmugalbums.start(smugmug, core.configobj, lock)
+        web.header('Content-Type', 'application/json')
+        return json.dumps(messages)
+    
+class createContainers: 
+    def GET(self):
+        messages =["Passed along request to create containers."]
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        syncUtil.smugmugcontainers.start(smugmug, core.configobj, lock)
+        web.header('Content-Type', 'application/json')
+        return json.dumps(messages)
+        
+class upload: 
+    def GET(self):
+        messages =["Passed along request to upload images."]
+        return json.dumps(messages)
+    
+class download: 
+    def GET(self):
+        messages =["Passed along request to download images."]
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        syncUtil.smugmugdownload.start(smugmug, core.configobj, lock)
+        web.header('Content-Type', 'application/json')
+        return json.dumps(messages)
+    
+class sync:
+    """
+    """
+    def GET(self):
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        syncUtil.smugmugsync.start(smugmug, core.configobj, lock)
+        web.header('Content-Type', 'application/json')
+        messages =["Passed along request to Sync SmugMug."]
+        return json.dumps(messages)
     
 ###############################################################################
 #                                                                             #
@@ -363,20 +454,6 @@ class smugmugscan:
         smugScan.smugScan.start(smugmug, core.configobj, lock)
         web.header('Content-Type', 'application/json')
         messages =["Passed along request to Scan SmugMug."]
-        return json.dumps(messages)
-    
-class sync:
-    """
-    """
-    def GET(self):
-        lock = multiprocessing.Lock()
-        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
-        token = result[0]
-        secret = result[1]
-        smugmug.set_oauth_token(token, secret)
-        syncUtil.smugmugsync.start(smugmug, core.configobj, lock)
-        web.header('Content-Type', 'application/json')
-        messages =["Passed along request to Sync SmugMug."]
         return json.dumps(messages)
 
 class rootdir:

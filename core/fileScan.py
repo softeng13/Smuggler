@@ -26,7 +26,6 @@ import logging
 import multiprocessing
 import thread
 import threading
-import time
 import os
 
 
@@ -75,6 +74,8 @@ def _md5(file):
     return m.hexdigest()
 
 def _findPictures(configobj, lock):
+    print('parent process:', os.getppid())
+    print('process id:', os.getpid())
     conn = db.getConn(configobj)
     myLogger.info("Starting file scan at => %s", configobj.picture_root)
     now = datetime.datetime.now()

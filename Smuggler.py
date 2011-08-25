@@ -52,6 +52,7 @@ def logSetup(debug, console, configobj):
 def main():
     #load the config file if it is there
     print sys.version
+    print('process id:', os.getpid())
     try:
         configFile = open("config.ini")
         configFile.close()
