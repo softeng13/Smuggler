@@ -6,6 +6,7 @@ import sys
 import core
 from core import db
 from core import smugglerWeb
+from lib import smugpy
 
 myLogger = logging.getLogger('Smuggler')
 
@@ -51,7 +52,7 @@ def logSetup(debug, console, configobj):
 def main():
     #load the config file if it is there
     print sys.version
-    print('process id:', os.getpid())
+    
     try:
         configFile = open("config.ini")
         configFile.close()

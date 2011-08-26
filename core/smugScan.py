@@ -28,7 +28,7 @@ import db
 
 myLogger = logging.getLogger('smugScan')
 
-def getAllPictureInfo(smugmug, configobj, lock):
+def getAllPictureInfo(configobj, smugmug, lock):
     print('parent process:', os.getppid())
     print('process id:', os.getpid())
     conn = db.getConn(configobj)

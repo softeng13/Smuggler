@@ -231,25 +231,20 @@ def findMissingPictures(conn):
     Columns: album, different local photo count(need upload), different smug photo count(need download) 
     """
     sql = (
-           "SELECT li.album as album, "
-           "    ( "
-           "    SELECT COUNT(*) "
-           "    FROM local_image "
-           "    WHERE album = li.album "
-           "      AND li.md5_sum NOT IN (SELECT md5_sum FROM smug_image) "
-           "    ) as need_upload, "
-           "    ( "
-           "    SELECT COUNT(*) "
-           "    FROM smug_album sa "
-           "        INNER JOIN smug_image si ON si.album_id = sa.id " 
-           "    WHERE sa.title = li.album "
-           "      AND si.md5_sum NOT IN (SELECT md5_sum FROM local_image) "
-           "    ) as need_download "
-           "FROM local_image li "
-           "    INNER JOIN smug_album on title = li.album "
-           "GROUP BY li.album "
-           "HAVING need_upload > 0 OR need_download > 0 "
-           "ORDER BY need_upload desc, need_download desc"
+           " SELECT li.album, count(*) as need_upload, "
+           "     ( "
+           "     SELECT COUNT(*) "
+           "     FROM smug_album sa "
+           "         INNER JOIN smug_image si ON si.album_id = sa.id "
+           "     WHERE sa.title = li.album "
+           "       AND si.md5_sum NOT IN (SELECT md5_sum FROM local_image) "
+           "     ) as need_download "
+           "             FROM local_image li"
+           "               INNER JOIN smug_album sa ON sa.title = li.album"
+           "             WHERE li.md5_sum NOT IN (SELECT md5_sum FROM smug_image) "
+           " group by li.album"
+           " having need_upload > 0 OR need_download > 0 "
+           " ORDER BY need_upload desc, need_download desc"
           ) 
     result = execute(conn, sql)
     return result
@@ -331,6 +326,17 @@ def imagesToDownload(conn):
     result = execute(conn, sql)
     return result
 
+def imagesToUpload(conn):
+    sql = (
+           " SELECT sa.id, li.path_root, li.file_path"
+           " FROM local_image li"
+           "   INNER JOIN smug_album sa ON sa.title = li.album"
+           " WHERE li.md5_sum NOT IN (SELECT md5_sum FROM smug_image)"
+           " LIMIT 20"
+          )
+    result = execute(conn, sql)
+    return result
+
 ###############################################################################
 #                                                                             #
 #    Methods to keep track of sync runs.                                      #
@@ -355,5 +361,12 @@ def insertAlbumLog(conn, id, name, category, subcategory, scan):
     params = [id, name, category, subcategory, scan]    
     sql = (
            "INSERT INTO album_log(album_id, name, category, sub_category, scan) VALUES (?,?,?,?,?)"
+          )
+    execute(conn, sql, params)
+
+def insertImageLog(conn, image_id, filename, album, category, subcategory, scan, action):
+    params = [image_id, filename, album, category, subcategory, scan, action]    
+    sql = (
+           "INSERT INTO image_log(image_id, filename, album, category, sub_category, scan, action) VALUES (?,?,?,?,?,?,?)"
           )
     execute(conn, sql, params)

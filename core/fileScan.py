@@ -30,7 +30,7 @@ import fileUtil
 
 myLogger = logging.getLogger('fileScan')
 
-def findPictures(configobj, lock):
+def findPictures(configobj, smugmug, lock):
     print('parent process:', os.getppid())
     print('process id:', os.getpid())
     conn = db.getConn(configobj)

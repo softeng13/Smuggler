@@ -51,5 +51,7 @@ smugmugcontainers = processRunner.Runner(syncUtil.createMissingContainers, 'Star
 smugmugcategories = processRunner.Runner(syncUtil.createMissingCategories, 'Staring to create missing Categories on SmugMug.', 'Finished Creating Categories on SmugMug.', 'Process to create Categories was already running.')
 smugmugsubcategories = processRunner.Runner(syncUtil.createMissingSubCategories, 'Staring to create missing SubCategories on SmugMug.', 'Finished Creating SubCategories on SmugMug.', 'Process to create SubCategories was already running.')
 smugmugalbums = processRunner.Runner(syncUtil.createMissingAlbums, 'Staring to create missing Albums on SmugMug.', 'Finished Creating Albums on SmugMug.', 'Process to create Albums was already running.')
-smugmugdownload = processRunner.Runner(syncUtil.download, 'Staring to download missing images from SmugMug.', 'Finished downloading missing images from SmugMug.', 'Process to download images is already running.')
+
+smugmugdownload = processRunner.Runner(syncUtil.download, 'Starting to download missing images from SmugMug.', 'Finished downloading missing images from SmugMug.', 'Process to download images is already running.')
+smugmugupload = processRunner.Runner(syncUtil.upload, 'Starting to upload missing images to SmugMug.', 'Finished uploading missing images to SmugMug.', 'Process to upload images is already running.')
  

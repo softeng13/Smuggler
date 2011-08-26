@@ -28,7 +28,7 @@ import db
 myLogger = logging.getLogger('dbSchema')
 
 def upgradeSchema(conn):
-    schema = AddIndexesSchema()
+    schema = ImageLogActionSchema()
     schema.upgrade(conn)
 
 class BaseSchema():
@@ -203,4 +203,18 @@ class AddIndexesSchema(UserSubCategorySchema):
             db.execute(conn, "create index li_album_index on local_image (album)")
             db.execute(conn, "create index li_md5_index on local_image (md5_sum)")
             db.execute(conn, "create index sa_album_index on smug_album (title)")
+            self.incrementDBVerson(conn)
+
+class ImageLogActionSchema(AddIndexesSchema):
+    """
+    """ 
+    def upgrade(self, conn):
+        self._upgrade(db.getDBVersion(conn), conn)
+    
+    def _upgrade(self, version, conn):
+        """
+        """
+        AddIndexesSchema._upgrade(self,version, conn)
+        if version < 11:
+            db.execute(conn, "ALTER TABLE image_log ADD action TEXT")
             self.incrementDBVerson(conn)

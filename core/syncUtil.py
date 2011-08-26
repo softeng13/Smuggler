@@ -25,10 +25,14 @@ import os
 import threading
 import urllib2
 import Queue
+import time
+import urllib2
 
+import core
 import db
 import fileUtil
 import webUtil
+from lib import smugpy
 
 myLogger = logging.getLogger('syncUtil')
 
@@ -151,7 +155,7 @@ def createMissingAlbums(configobj, smugmug, lock):
         db.insertAlbumLog(conn, id, album[0], album[1], album[3], sync)
         lock.release()
 
-def download(downloadImages, configobj, smugmug, lock):
+def download(configobj, smugmug, lock):
     """
     This method will download all the missing files 5 at a time.
     """
@@ -213,7 +217,95 @@ class DownloadThread(threading.Thread):
     
             self._lock.acquire()
             db.addLocalImage(self._conn, subcategory, category, album, sync, fileUtil.md5(filepath), self._configobj.picture_root, filename, format(filepath.lstrip(self._configobj.picture_root)), sync)
+            db.insertImageLog(self._conn, id, filename, album, category, subcategory, datetime.now(), 'Download')
             self._lock.release() 
+        
+            #signals to queue job is done
+            self._queue.task_done()
+
+def upload(configobj, smugmug, lock):
+    """
+    This method will upload all the missing files 5 at a time.
+    """
+    start = time.time()
+    myLogger.debug('upload - parent process: %s  process id: %s', os.getppid(), os.getpid())
+    conn = db.getConn(configobj)
+    sync = datetime.now()
+    myLogger.debug("getting images to upload")
+    uploadImages = db.imagesToUpload(conn)
+    myLogger.debug("Have list of images that need to be uploaded.")
+    #Loop through the images and download them 
+    queue = Queue.Queue()
+    #spawn a pool of threads, and pass them queue instance 
+    threads = []
+    for i in range(3):
+        t = UploadThread(queue, conn, configobj, smugmug, lock)
+        t.start()
+        threads.append(t)
+    
+    #populate queue with data   
+    for uploadImage in uploadImages:
+        queue.put(uploadImage)
+    
+    #wait on the queue until everything has been processed     
+    queue.join()    
+    
+    end = time.time()  
+    myLogger.debug("queue emptied in  %d", (end - start))
+    #stop the threads 
+    myLogger.debug("finished downloading images. it took %d", (end - start))
+
+    
+class UploadThread(threading.Thread):
+    def __init__(self, queue, conn, configobj, smugmug, lock):
+        threading.Thread.__init__(self)
+        self._queue = queue
+        self._conn = conn
+        self._configobj = configobj
+        self._lock = lock
+        self._smugmug = smugpy.SmugMug(api_key=core.API_KEY, oauth_secret=core.OAUTH_SECRET, api_version="1.3.0", app_name="Smuggler")
+        result = db.getOAuthConnectionDetails(db.getConn(self._configobj))
+        token = result[0]
+        secret = result[1]
+        self._smugmug.set_oauth_token(token, secret)
+        self._run = True
+    
+    def run(self):
+        #smugmug.images_upload(AlbumID=2,File='/Path/To/Image.jpg')
+        while self._run:
+            #grabs host from queue
+            uploadImage = self._queue.get()
+            
+            albumid = uploadImage[0] 
+            filepath = uploadImage[1]+"/"+uploadImage[2]
+            
+            myLogger.debug("Starting upload of image '%s'", filepath)            
+            try:            
+                response = self._smugmug.images_upload(AlbumID=albumid,File=filepath)
+            except urllib2.URLError:
+                myLogger.error("Upload times out for some reason, going to try one more time.")
+                response = self._smugmug.images_upload(AlbumID=albumid,File=filepath)
+            myLogger.debug("Finished upload of image '%s'. Now getting item info to log in db.", filepath)
+            
+            pictureFile = uploadImage[2]
+            album = os.path.basename(os.path.dirname(pictureFile))
+            subcategory = os.path.basename(os.path.dirname(os.path.dirname(pictureFile)))
+            category = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(pictureFile))))
+            if category == "" or category == None:
+                category = subcategory
+                subcategory = None
+            
+            imageid = response["Image"]["id"]
+            imagekey = response["Image"]["Key"]
+            
+            response = self._smugmug.images_getInfo(ImageID=imageid, ImageKey=imagekey)
+            
+            self._lock.acquire()
+            db.addSmugImage(self._conn,albumid, datetime.strptime(response["Image"]["LastUpdated"],'%Y-%m-%d %H:%M:%S'), response["Image"]["MD5Sum"], response["Image"]["Key"], response["Image"]["id"], response["Image"]["FileName"])
+            db.insertImageLog(self._conn, imageid, response["Image"]["FileName"], album, category, subcategory, datetime.now(), 'Upload')
+            self._lock.release() 
+            
+            myLogger.debug("Finished queued item.")
         
             #signals to queue job is done
             self._queue.task_done()

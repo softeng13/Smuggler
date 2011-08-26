@@ -361,6 +361,12 @@ class createContainers:
 class upload: 
     def GET(self):
         messages =["Passed along request to upload images."]
+        lock = multiprocessing.Lock()
+        result = db.getOAuthConnectionDetails(db.getConn(core.configobj))
+        token = result[0]
+        secret = result[1]
+        smugmug.set_oauth_token(token, secret)
+        core.smugmugupload.start(smugmug, core.configobj, lock)
         return json.dumps(messages)
     
 class download: 
