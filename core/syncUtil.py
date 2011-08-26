@@ -22,7 +22,9 @@ SOFTWARE.
 from datetime import datetime
 import logging
 import os
+import threading
 import urllib2
+import Queue
 
 import db
 import fileUtil
@@ -32,7 +34,7 @@ myLogger = logging.getLogger('syncUtil')
 
 ###############################################################################
 #                                                                             #
-#    Below are used to generate some info for the frontend.                   #
+#    Below are used to generate some Tables for the frontend.                 #
 #                                                                             #
 ###############################################################################
 
@@ -62,64 +64,42 @@ def missingSmugMugAlbumsHTML(conn):
     else:
         return webUtil.getTable(columns, rows, columnsclass)
 
-
-        
 ###############################################################################
 #                                                                             #
-#                                        #
+#     All the action methods are below. They will cause changes locally       #
+#     and/or on SmugMug.                                                      #
 #                                                                             #
 ###############################################################################
 
 def sync(configobj, smugmug, lock):
+    """
+    Does the whole thing, scans, uploads, downloads, etc.  
+    """
     myLogger.debug('sync - parent process: %s  process id: %s', os.getppid(), os.getpid())
     conn = db.getConn(configobj)
     sync = datetime.now()
-    _createMissingContainers(conn, smugmug,sync,lock)
+    createMissingContainers(conn, smugmug,sync,lock)
 
 def createMissingContainers(configobj, smugmug, lock):
+    """
+    This method will create all the missing Categories, SubCategories and Albums
+    that were found locally, but not on SmugMug.
+    """
     myLogger.debug('createMissingContainers - parent process: %s  process id: %s', os.getppid(), os.getpid())
     conn = db.getConn(configobj)
     sync = datetime.now()
-    _createMissingContainers(conn, smugmug,sync,lock)
+    createMissingCategories(conn,smugmug, sync, lock)
+    createMissingSubCategories(conn,smugmug, sync, lock)
+    createMissingAlbums(conn,smugmug, sync, lock)
 
 def createMissingCategories(configobj, smugmug, lock):
+    """
+    Will create any missing Categories on SmugMug that have been found locally,
+    but not on SmugMug.
+    """
     myLogger.debug('createMissingCategories - parent process: %s  process id: %s', os.getppid(), os.getpid())
     conn = db.getConn(configobj)
     sync = datetime.now()
-    _createMissingCategories(conn, smugmug,sync,lock)
-
-def createMissingSubCategories(configobj, smugmug, lock):
-    myLogger.debug('createMissingSubCategories - parent process: %s  process id: %s', os.getppid(), os.getpid())
-    conn = db.getConn(configobj)
-    sync = datetime.now()
-    _createMissingSubCategories(conn, smugmug,sync,lock)
-
-def createMissingAlbums(configobj, smugmug, lock):
-    myLogger.debug('createMissingAlbums - parent process: %s  process id: %s', os.getppid(), os.getpid())
-    conn = db.getConn(configobj)
-    sync = datetime.now()
-    _createMissingAlbums(conn, smugmug,sync,lock)
-
-
-def download(configobj, smugmug, lock):
-    myLogger.debug('download - parent process: %s  process id: %s', os.getppid(), os.getpid())
-    conn = db.getConn(configobj)
-    sync = datetime.now()
-    myLogger.debug("calling _download()")
-    _download(conn, configobj, smugmug, sync,lock)
-        
-###############################################################################
-#                                                                             #
-#    Private methods to perform actions                                       #
-#                                                                             #
-###############################################################################
-
-def _createMissingContainers(conn,smugmug, sync, lock):
-    _createMissingCategories(conn,smugmug, sync, lock)
-    _createMissingSubCategories(conn,smugmug, sync, lock)
-    _createMissingAlbums(conn,smugmug, sync, lock)
-
-def _createMissingCategories(conn,smugmug, sync, lock):
     categories = db.missingSmugMugCategories(conn)
     for category in categories:
         result = smugmug.categories_create(Name=category[0])
@@ -128,8 +108,15 @@ def _createMissingCategories(conn,smugmug, sync, lock):
         lock.acquire()
         db.insertCategoryLog(conn, id, category[0], sync)
         lock.release()
-    
-def _createMissingSubCategories(conn,smugmug, sync, lock):
+
+def createMissingSubCategories(configobj, smugmug, lock):
+    """
+    Will create any missing SubCategories on SmugMug that have been found locally,
+    but not on SmugMug.
+    """
+    myLogger.debug('createMissingSubCategories - parent process: %s  process id: %s', os.getppid(), os.getpid())
+    conn = db.getConn(configobj)
+    sync = datetime.now()
     subcategories = db.missingSmugMugSubCategories(conn)
     for subcategory in subcategories:
         result = smugmug.subcategories_create(Name=subcategory[0], CategoryID=subcategory[2])
@@ -139,9 +126,15 @@ def _createMissingSubCategories(conn,smugmug, sync, lock):
         db.addUserSubCategory(conn,id,"",subcategory[0], subcategory[2])
         db.insertSubCategoryLog(conn, id, subcategory[0],subcategory[1], sync)
         lock.release()
-    
 
-def _createMissingAlbums(conn,smugmug, sync, lock):
+def createMissingAlbums(configobj, smugmug, lock):
+    """
+    Will create any albums on SmugMug that have been found locally, but not on SmugMug.
+    Currently uses the SmugMug defaults for the album properties.
+    """
+    myLogger.debug('createMissingAlbums - parent process: %s  process id: %s', os.getppid(), os.getpid())
+    conn = db.getConn(configobj)
+    sync = datetime.now()
     albums = db.missingSmugMugAlbums(conn)
     for album in albums:
         if album[2] == None: #no category or subcategory
@@ -158,46 +151,69 @@ def _createMissingAlbums(conn,smugmug, sync, lock):
         db.insertAlbumLog(conn, id, album[0], album[1], album[3], sync)
         lock.release()
 
-def _download(conn, configobj, smugmug, sync, lock):
-    log = logging.getLogger('_download')
-    log.debug("_download() called")
+def download(downloadImages, configobj, smugmug, lock):
+    """
+    This method will download all the missing files 5 at a time.
+    """
+    myLogger.debug('download - parent process: %s  process id: %s', os.getppid(), os.getpid())
+    conn = db.getConn(configobj)
+    sync = datetime.now()
+    myLogger.debug("getting images to download")
     downloadImages = db.imagesToDownload(conn)
-    log.debug("Have list of images that need to be downloaded.")
+    myLogger.debug("Have list of images that need to be downloaded.")
+    #Loop through the images and download them 
+    queue = Queue.Queue()
+    #spawn a pool of threads, and pass them queue instance 
+    for i in range(5):
+        t = DownloadThread(queue, conn, configobj, smugmug, lock)
+        t.start()
     
     #populate queue with data   
     for downloadImage in downloadImages:
-        category = downloadImage[0]
-        subcategory = downloadImage[1]
-        album = downloadImage[2]
-        filename = downloadImage[3]
-        id = downloadImage[4]
-        key = downloadImage[5]
-        
-        log.debug("going to smugmug to get image url for %s", filename)
-        response = smugmug.images_getURLs(ImageID=id, ImageKey=key)
-        url = response["Image"]["OriginalURL"]
-        myLogger.info("Downloading image from '%s'", url)
-        filepath = _buildfilePath(configobj.picture_root, category, subcategory, album, filename)
-        myLogger.info("Saving downloaded image to '%s'", filepath)
-        
-        file = urllib2.urlopen(url)
-        output = open(filepath,'wb')
-        output.write(file.read())
-        output.close()
-
-        lock.acquire()
-        db.addLocalImage(conn, subcategory, category, album, sync, fileUtil.md5(filepath), configobj.picture_root, filename, format(filepath.lstrip(configobj.picture_root)), sync)
-        lock.release() 
-    log.debug("finished downloading images")
+        queue.put(downloadImage)
     
-
-def _buildfilePath(root, category, subcategory, album, filename):
-    path = root
-    if category <> None:
-        path = path + '/' + category
-    if subcategory <> None:
-        path = path + '/' + subcategory
-    path = path + '/' + album + '/' + filename
-    return path 
-
-
+    #wait on the queue until everything has been processed     
+    queue.join()    
+    myLogger.debug("finished downloading images")
+    
+class DownloadThread(threading.Thread):
+    def __init__(self, queue, conn, configobj, smugmug, lock):
+        threading.Thread.__init__(self)
+        self._queue = queue
+        self._conn = conn
+        self._configobj = configobj
+        self._smugmug = smugmug
+        self._lock = lock
+  
+    def run(self):
+        while True:
+            #grabs host from queue
+            downloadImage = self._queue.get()
+            
+            category = downloadImage[0]
+            subcategory = downloadImage[1]
+            album = downloadImage[2]
+            filename = downloadImage[3]
+            id = downloadImage[4]
+            key = downloadImage[5]
+            
+            myLogger.debug("going to smugmug to get image url for %s", filename)
+            response = self._smugmug.images_getURLs(ImageID=id, ImageKey=key)
+            url = response["Image"]["OriginalURL"]
+            myLogger.info("Downloading image from '%s'", url)
+            filepath = fileUtil.buildfilePath(self._configobj.picture_root, category, subcategory, album)
+            fileUtil.mkdir(filepath)
+            filepath = filepath+filename
+            myLogger.info("Saving downloaded image to '%s'", filepath)
+            
+            file = urllib2.urlopen(url)
+            output = open(filepath,'wb')
+            output.write(file.read())
+            output.close()
+    
+            self._lock.acquire()
+            db.addLocalImage(self._conn, subcategory, category, album, sync, fileUtil.md5(filepath), self._configobj.picture_root, filename, format(filepath.lstrip(self._configobj.picture_root)), sync)
+            self._lock.release() 
+        
+            #signals to queue job is done
+            self._queue.task_done()

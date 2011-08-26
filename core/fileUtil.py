@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+import errno
 import logging
 import hashlib
 import os
@@ -37,6 +38,23 @@ def md5(file):
             break
         m.update(data)
     return m.hexdigest()
+
+def mkdir(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST:
+            pass
+        else: raise
+
+def buildfilePath(root, category, subcategory, album):
+    path = root
+    if category <> None:
+        path = path + '/' + category
+    if subcategory <> None:
+        path = path + '/' + subcategory
+    path = path + '/' + album + '/'
+    return path 
 
 def fileRenamer(conn):
     """

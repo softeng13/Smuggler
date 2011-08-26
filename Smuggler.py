@@ -9,7 +9,6 @@ from core import smugglerWeb
 
 myLogger = logging.getLogger('Smuggler')
 
-
 def logSetup(debug, console, configobj):
     """
     Setting up the logging the way we want it. Basically we will log to both
@@ -34,7 +33,7 @@ def logSetup(debug, console, configobj):
     else:
         logger.setLevel(logging.WARNING) 
     
-    formatter = logging.Formatter('%(processName)s %(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    formatter = logging.Formatter('%(processName)s %(threadName)s %(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     
     #File Handler Setup to create rotate log files at 10 megabytes and only keep 5
     handler = logging.handlers.RotatingFileHandler(configobj.log_dir+'/Smuggler.log', maxBytes=10*1024*1024, backupCount=5)
