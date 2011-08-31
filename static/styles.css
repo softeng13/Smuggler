@@ -579,7 +579,7 @@ label.component-error input {
 	display: none;
 }
 
-#new_categories, #new_subcategories, #new_albums {
+.report_index {
 	background-color: #EAEAEA;
 	border-width: 2px;
 	border-style: solid;
@@ -587,7 +587,11 @@ label.component-error input {
 	margin-bottom: 10px;
 }
 
-#new_categories p,#new_subcategories p,#new_albums p {
+.report_index p {
 	margin: 5px 5px 5px 5px; 
 	font-weight: bold;
+}
+
+.report_index .odd {
+	background-color: #FFFFFF;
 }

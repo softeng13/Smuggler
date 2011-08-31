@@ -240,7 +240,6 @@ def findMissingPictures(conn):
            "       AND si.md5_sum NOT IN (SELECT md5_sum FROM local_image) "
            "     ) as need_download "
            "             FROM local_image li"
-           "               INNER JOIN smug_album sa ON sa.title = li.album"
            "             WHERE li.md5_sum NOT IN (SELECT md5_sum FROM smug_image) "
            " group by li.album"
            " having need_upload > 0 OR need_download > 0 "
@@ -332,7 +331,6 @@ def imagesToUpload(conn):
            " FROM local_image li"
            "   INNER JOIN smug_album sa ON sa.title = li.album"
            " WHERE li.md5_sum NOT IN (SELECT md5_sum FROM smug_image)"
-           " LIMIT 20"
           )
     result = execute(conn, sql)
     return result

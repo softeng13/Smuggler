@@ -77,6 +77,7 @@ urls = (
         '/sync/newCategories', 'newCategories',
         '/sync/newSubCategories', 'newSubCategories',
         '/sync/newAlbums', 'newAlbums',
+        '/sync/upDownImages', 'upDownImages',
         
         '/table/categoryTable', 'categoryTable',
         '/table/filenameTable', 'filenameTable',
@@ -309,6 +310,9 @@ class newSubCategories:
 class newAlbums: 
     def GET(self):
         return syncUtil.missingSmugMugAlbumsHTML(db.getConn(core.configobj)) 
+class upDownImages:
+    def GET(self):
+        return syncUtil.missingImagesHTML(db.getConn(core.configobj))
 
 class createCategories: 
     def GET(self):

@@ -23,7 +23,6 @@ from datetime import datetime
 import logging
 import os
 import threading
-import urllib2
 import Queue
 import time
 import urllib2
@@ -63,6 +62,14 @@ def missingSmugMugAlbumsHTML(conn):
     rows = db.missingSmugMugAlbums(conn)
     columns = ["Album", "Category", "Category Id", "SubCategory", "SubCategory Id"]
     columnsclass = [None, None, "hidden", None, "hidden"]
+    if len(rows) == 0:
+        return ""
+    else:
+        return webUtil.getTable(columns, rows, columnsclass)
+def missingImagesHTML(conn):
+    rows = db.findMissingPictures(conn)
+    columns = ["Album", "Need Upload", "Need Download"]
+    columnsclass = [None, None, None]
     if len(rows) == 0:
         return ""
     else:
@@ -282,30 +289,28 @@ class UploadThread(threading.Thread):
             myLogger.debug("Starting upload of image '%s'", filepath)            
             try:            
                 response = self._smugmug.images_upload(AlbumID=albumid,File=filepath)
-            except urllib2.URLError:
-                myLogger.error("Upload times out for some reason, going to try one more time.")
-                response = self._smugmug.images_upload(AlbumID=albumid,File=filepath)
-            myLogger.debug("Finished upload of image '%s'. Now getting item info to log in db.", filepath)
-            
-            pictureFile = uploadImage[2]
-            album = os.path.basename(os.path.dirname(pictureFile))
-            subcategory = os.path.basename(os.path.dirname(os.path.dirname(pictureFile)))
-            category = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(pictureFile))))
-            if category == "" or category == None:
-                category = subcategory
-                subcategory = None
-            
-            imageid = response["Image"]["id"]
-            imagekey = response["Image"]["Key"]
-            
-            response = self._smugmug.images_getInfo(ImageID=imageid, ImageKey=imagekey)
-            
-            self._lock.acquire()
-            db.addSmugImage(self._conn,albumid, datetime.strptime(response["Image"]["LastUpdated"],'%Y-%m-%d %H:%M:%S'), response["Image"]["MD5Sum"], response["Image"]["Key"], response["Image"]["id"], response["Image"]["FileName"])
-            db.insertImageLog(self._conn, imageid, response["Image"]["FileName"], album, category, subcategory, datetime.now(), 'Upload')
-            self._lock.release() 
-            
-            myLogger.debug("Finished queued item.")
-        
+                myLogger.debug("Finished upload of image '%s'. Now getting item info to log in db.", filepath)
+                pictureFile = uploadImage[2]
+                album = os.path.basename(os.path.dirname(pictureFile))
+                subcategory = os.path.basename(os.path.dirname(os.path.dirname(pictureFile)))
+                category = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(pictureFile))))
+                if category == "" or category == None:
+                    category = subcategory
+                    subcategory = None
+                
+                imageid = response["Image"]["id"]
+                imagekey = response["Image"]["Key"]
+                
+                response = self._smugmug.images_getInfo(ImageID=imageid, ImageKey=imagekey)
+                
+                self._lock.acquire()
+                db.addSmugImage(self._conn,albumid, datetime.strptime(response["Image"]["LastUpdated"],'%Y-%m-%d %H:%M:%S'), response["Image"]["MD5Sum"], response["Image"]["Key"], response["Image"]["id"], response["Image"]["FileName"])
+                db.insertImageLog(self._conn, imageid, response["Image"]["FileName"], album, category, subcategory, datetime.now(), 'Upload')
+                self._lock.release() 
+                
+                myLogger.debug("Finished queued item.")
+            except urllib2.URLError as (errno,strerror):
+                myLogger.error("urllib2.URLError({0}): {1}".format(errno, strerror))
+                #self._queue.put(uploadImage)        
             #signals to queue job is done
             self._queue.task_done()

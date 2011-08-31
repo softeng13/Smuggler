@@ -160,5 +160,13 @@ $(document).ready(function(){
 			$("#new_albums").append(xml_to_string(data));
 		}
     });
+	
+	$.get("/sync/upDownImages", function(data) {
+		if (xml_to_string(data).indexOf('parsererror') != -1){
+			$("#up_down").addClass("hidden");
+		} else {
+			$("#up_down").append(xml_to_string(data));
+		}
+    });
 
 });

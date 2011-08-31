@@ -110,4 +110,6 @@ def _emptySmugMugTables(conn, lock):
     lock.acquire()
     db.execute(conn,"DELETE FROM smug_album")
     db.execute(conn,"DELETE FROM smug_image")
+    db.execute(conn,"DELETE FROM user_category")
+    db.execute(conn,"DELETE FROM user_subcategory")
     lock.release()
