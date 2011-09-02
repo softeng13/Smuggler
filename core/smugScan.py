@@ -29,8 +29,7 @@ import db
 myLogger = logging.getLogger('smugScan')
 
 def getAllPictureInfo(configobj, smugmug, lock):
-    print('parent process:', os.getppid())
-    print('process id:', os.getpid())
+    myLogger.info("getAllPictures() parent process:'{0}' process id:'{1}".format(os.getppid(),os.getpid()))
     conn = db.getConn(configobj)
     #start fresh on this
     myLogger.debug("Emptying smugmug tables.")

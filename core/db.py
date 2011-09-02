@@ -260,7 +260,7 @@ def findDuplicateLocalImage(conn):
 
 def findDuplicateSmugMugImage(conn):
     sql = (
-           "SELECT si.filename, si2.filename, sa.title, sa.sub_category, sa.category "
+           "SELECT distinct si.filename, si2.filename, sa.title, sa.sub_category, sa.category "
            "FROM smug_image si "
            "   INNER JOIN smug_album sa on si.album_id = sa.id "
            "   INNER JOIN smug_image si2 on si.md5_sum = si2.md5_sum AND si.rowid < si2.rowid "

@@ -26,6 +26,8 @@ import threading
 import Queue
 import time
 import urllib2
+import sys
+import traceback
 
 import core
 import db
@@ -86,6 +88,8 @@ def sync(configobj, smugmug, lock):
     """
     Does the whole thing, scans, uploads, downloads, etc.  
     """
+    myLogger.info("sync() parent process:'{0}' process id:'{1}".format(os.getppid(),os.getpid()))
+    
     myLogger.debug('sync - parent process: %s  process id: %s', os.getppid(), os.getpid())
     conn = db.getConn(configobj)
     sync = datetime.now()
@@ -96,7 +100,7 @@ def createMissingContainers(configobj, smugmug, lock):
     This method will create all the missing Categories, SubCategories and Albums
     that were found locally, but not on SmugMug.
     """
-    myLogger.debug('createMissingContainers - parent process: %s  process id: %s', os.getppid(), os.getpid())
+    myLogger.info("createMissingContainers() parent process:'{0}' process id:'{1}".format(os.getppid(),os.getpid()))
     conn = db.getConn(configobj)
     sync = datetime.now()
     createMissingCategories(conn,smugmug, sync, lock)
@@ -166,7 +170,7 @@ def download(configobj, smugmug, lock):
     """
     This method will download all the missing files 5 at a time.
     """
-    myLogger.debug('download - parent process: %s  process id: %s', os.getppid(), os.getpid())
+    myLogger.info("download() parent process:'{0}' process id:'{1}".format(os.getppid(),os.getpid()))
     conn = db.getConn(configobj)
     sync = datetime.now()
     myLogger.debug("getting images to download")
@@ -176,7 +180,7 @@ def download(configobj, smugmug, lock):
     queue = Queue.Queue()
     #spawn a pool of threads, and pass them queue instance 
     for i in range(5):
-        t = DownloadThread(queue, conn, configobj, smugmug, lock)
+        t = DownloadThread(queue, conn, configobj, smugmug, lock, sync)
         t.start()
     
     #populate queue with data   
@@ -188,13 +192,14 @@ def download(configobj, smugmug, lock):
     myLogger.debug("finished downloading images")
     
 class DownloadThread(threading.Thread):
-    def __init__(self, queue, conn, configobj, smugmug, lock):
+    def __init__(self, queue, conn, configobj, smugmug, lock, sync):
         threading.Thread.__init__(self)
         self._queue = queue
         self._conn = conn
         self._configobj = configobj
         self._smugmug = smugmug
         self._lock = lock
+        self._sync = sync
   
     def run(self):
         while True:
@@ -221,10 +226,10 @@ class DownloadThread(threading.Thread):
             output = open(filepath,'wb')
             output.write(file.read())
             output.close()
-    
+            
             self._lock.acquire()
-            db.addLocalImage(self._conn, subcategory, category, album, sync, fileUtil.md5(filepath), self._configobj.picture_root, filename, format(filepath.lstrip(self._configobj.picture_root)), sync)
-            db.insertImageLog(self._conn, id, filename, album, category, subcategory, datetime.now(), 'Download')
+            db.addLocalImage(self._conn, subcategory, category, album, self._sync, fileUtil.md5(filepath), self._configobj.picture_root, filename, format(filepath.lstrip(self._configobj.picture_root)), self._sync)
+            db.insertImageLog(self._conn, id, filename, album, category, subcategory, self._sync, 'Download')
             self._lock.release() 
         
             #signals to queue job is done
@@ -234,6 +239,7 @@ def upload(configobj, smugmug, lock):
     """
     This method will upload all the missing files 5 at a time.
     """
+    myLogger.info("upload() parent process:'{0}' process id:'{1}".format(os.getppid(),os.getpid()))
     start = time.time()
     myLogger.debug('upload - parent process: %s  process id: %s', os.getppid(), os.getpid())
     conn = db.getConn(configobj)
@@ -251,8 +257,11 @@ def upload(configobj, smugmug, lock):
         threads.append(t)
     
     #populate queue with data   
+    size = 0
     for uploadImage in uploadImages:
         queue.put(uploadImage)
+        size = size + 1
+    print size
     
     #wait on the queue until everything has been processed     
     queue.join()    
@@ -260,7 +269,7 @@ def upload(configobj, smugmug, lock):
     end = time.time()  
     myLogger.debug("queue emptied in  %d", (end - start))
     #stop the threads 
-    myLogger.debug("finished downloading images. it took %d", (end - start))
+    myLogger.debug("finished uploading images. it took %d", (end - start))
 
     
 class UploadThread(threading.Thread):
@@ -300,8 +309,10 @@ class UploadThread(threading.Thread):
                 
                 imageid = response["Image"]["id"]
                 imagekey = response["Image"]["Key"]
+                myLogger.debug("Image uploaded Key:'{0}' ID:'{1}'".format(imagekey, imageid))
                 
                 response = self._smugmug.images_getInfo(ImageID=imageid, ImageKey=imagekey)
+                myLogger.debug("Local MD5_SUM: {0} SmugMug: {1}".format(fileUtil.md5(filepath),response["Image"]["MD5Sum"]))
                 
                 self._lock.acquire()
                 db.addSmugImage(self._conn,albumid, datetime.strptime(response["Image"]["LastUpdated"],'%Y-%m-%d %H:%M:%S'), response["Image"]["MD5Sum"], response["Image"]["Key"], response["Image"]["id"], response["Image"]["FileName"])
@@ -309,8 +320,9 @@ class UploadThread(threading.Thread):
                 self._lock.release() 
                 
                 myLogger.debug("Finished queued item.")
-            except urllib2.URLError as (errno,strerror):
-                myLogger.error("urllib2.URLError({0}): {1}".format(errno, strerror))
+            except Exception, err:
+                myLogger.error("Exception({0}): {1}".format(filepath,err))
+                traceback.print_exc(file=sys.stdout)
                 #self._queue.put(uploadImage)        
             #signals to queue job is done
             self._queue.task_done()

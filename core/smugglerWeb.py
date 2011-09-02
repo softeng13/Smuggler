@@ -37,7 +37,7 @@ import syncUtil
 
 myLogger = logging.getLogger('smugglerWeb')
 
-smugmug = smugpy.SmugMug(api_key=core.API_KEY, oauth_secret=core.OAUTH_SECRET, api_version="1.3.0", app_name="Smuggler")
+smugmug = smugpy.SmugMug(api_key=core.API_KEY, oauth_secret=core.OAUTH_SECRET, app_name="Smuggler")
 
 working_dir = os.getcwd()
 default_log = ''.join([working_dir, '/log']) 

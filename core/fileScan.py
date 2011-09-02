@@ -31,10 +31,10 @@ import fileUtil
 myLogger = logging.getLogger('fileScan')
 
 def findPictures(configobj, smugmug, lock):
-    print('parent process:', os.getppid())
-    print('process id:', os.getpid())
+    myLogger.info("findPictures() parent process:'{0}' process id:'{1}".format(os.getppid(),os.getpid()))
     conn = db.getConn(configobj)
     myLogger.info("Starting file scan at => %s", configobj.picture_root)
+    _emptyLocalTables(conn, lock)
     now = datetime.datetime.now()
     for root, dirs, files in os.walk(configobj.picture_root):
         for name in files:
@@ -43,8 +43,6 @@ def findPictures(configobj, smugmug, lock):
             if extension.lower() in core.EXTENSIONS:
                 myLogger.debug("FileName: %s", fullname)
                 _processFoundFile(conn, configobj.picture_root, fullname, now, lock)
-    #cleanup what we can, for images that have been moved            
-    _cleanup(conn, lock)
     conn.close()
 
 def _processFoundFile(conn, picture_root, pictureFile, timestamp, lock):
@@ -68,6 +66,11 @@ def _processFoundFile(conn, picture_root, pictureFile, timestamp, lock):
     lock.release() 
     myLogger.debug("_processFoundFile(%s,%s) completed", picture_root, pictureFile)
 
+def _emptyLocalTables(conn, lock):
+    lock.acquire()
+    db.execute(conn,"DELETE FROM local_image")
+    lock.release()
+    
 def _cleanup(conn, lock):
     """
     We need to try to identify albums, or pictures that were not found during 
