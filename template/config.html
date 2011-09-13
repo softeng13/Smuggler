@@ -68,6 +68,16 @@ $var pagescript: /static/script-config.js
 						<span>Smuggler Already Authenticated</span>
 				</label>
 			</div>
+			<!-- Scheduling -->
+	        <div class="field-pair">
+	          	<p>SmugMug can run the sync operations on a daily basis. Just select the time you would like it to start below.</p>
+				<label class="nocheck clearfix" for="root_dir">	
+					<span class="component-title">Start Time:</span>
+					$:form.start_time_hour.render()
+					:
+					$:form.start_time_minute.render()
+				</label>
+			</div>
 			<div class="save">
 				$:form.Save.render()
 			</div>

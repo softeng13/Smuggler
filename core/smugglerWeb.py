@@ -114,6 +114,8 @@ config_form = form.Form(
                 web.form.Textbox('root_dir', form.notnull, form.Validator('The root image directory must already exist.', lambda path: os.path.isdir(path)), id='root_dir'),
                 web.form.Textbox('log_dir', form.notnull, form.Validator('The log directory must already exist.', lambda path: os.path.isdir(path)), id='log_dir'),
                 web.form.Textbox('data_dir', form.notnull, form.Validator('The data directory must already exist.', lambda path: os.path.isdir(path)), id='data_dir'),
+                web.form.Dropdown(name='start_time_hour', args=['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24'], value='8'),
+                web.form.Dropdown(name='start_time_minute', args=['00','15','30','45'], value='00'),
                 web.form.Button('Save', id='save', class_="formbutton")
                 )
 
