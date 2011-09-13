@@ -6,7 +6,6 @@ import sys
 import core
 from core import db
 from core import smugglerWeb
-from lib import smugpy
 
 myLogger = logging.getLogger('Smuggler')
 
@@ -74,6 +73,7 @@ def main():
     myLogger.info("Starting Smuggler, watch your back.")
     #start web server
     smugglerWeb.run()
+
 
 if __name__ == '__main__':
     main()

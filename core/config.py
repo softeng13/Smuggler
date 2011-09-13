@@ -28,11 +28,17 @@ myLogger = logging.getLogger('config')
 
 class Config():
     def __init__(self, config="config.ini"):
+        self.update = False
         self.config = config
         self.log_dir = "log"
         self.data_dir = "data"
         self.picture_root = None
+        self.start_time ="22:00"
+        self.scan_interval = "24"
         self.loadConfig()
+        if self.update:
+            self.saveConfig()
+        
 
     def loadConfig(self):
         """
@@ -52,9 +58,19 @@ class Config():
             #load user settings
             user_settings = configFile['USER_SETTINGS']
             self.picture_root = user_settings['picture_root']
+            
+            #first update to config file
+            try:
+            #load scheduling settings
+                schedule = configFile['SCHEDULING']
+                self.start_time = schedule['start_time']
+                self.scan_interval = schedule['scan_interval']
+            except KeyError:
+                self.update = True
             myLogger.debug("finished loading config file")
         except IOError:
             myLogger.debug("Config file does not exist. Gonna role with defaults")
+            self.update = True
 
     def saveConfig(self):
         """
@@ -72,4 +88,7 @@ class Config():
         #User Specific
         configFile['USER_SETTINGS'] = {}
         configFile['USER_SETTINGS']['picture_root'] = self.picture_root
+        configFile['SCHEDULING'] = {}
+        configFile['SCHEDULING']['start_time'] = self.start_time
+        configFile['SCHEDULING']['scan_interval'] = self.scan_interval
         configFile.write()
