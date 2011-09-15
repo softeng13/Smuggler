@@ -1,4 +1,4 @@
-$def with (form, url, authBad, picRoot)
+$def with (form, url, authBad, picRoot, logDir, dataDir, startHour, startMinute)
 $var title: Smuggler - Configuration Settings
 $var home: 
 $var reports:
@@ -19,6 +19,7 @@ $var pagescript: /static/script-config.js
 						<label class="nocheck clearfix" for="log_dir">
 			
 					<span class="component-title">Log Directory:</span>
+					$:form.log_dir.set_value(logDir)
 					$:form.log_dir.render()								
 				</label>				
 			</div>
@@ -34,6 +35,7 @@ $var pagescript: /static/script-config.js
 						<label class="nocheck clearfix" for="data_dir">	
 					
 					<span class="component-title">Data Directory:</span>
+					$:form.data_dir.set_value(dataDir)
 					$:form.data_dir.render()
 				</label>						
 			</div>
@@ -46,9 +48,9 @@ $var pagescript: /static/script-config.js
 						<label class="nocheck clearfix component-error" for="root_dir">
 					$else:
 						<label class="nocheck clearfix" for="root_dir">	
-						
 				
 					<span class="component-title">Root Image Folder:</span>
+					$:form.root_dir.set_value(picRoot)
 					$:form.root_dir.render()
 				</label>
 			</div>
@@ -72,6 +74,10 @@ $var pagescript: /static/script-config.js
 	        <div class="field-pair">
 	          	<p>SmugMug can run the sync operations on a daily basis. Just select the time you would like it to start below.</p>
 				<label class="nocheck clearfix" for="root_dir">	
+				
+					$:form.start_time_hour.set_value(startHour)
+					$:form.start_time_minute.set_value(startMinute)
+					
 					<span class="component-title">Start Time:</span>
 					$:form.start_time_hour.render()
 					:
